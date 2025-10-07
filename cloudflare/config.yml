@@ -1,0 +1,14 @@
+tunnel: testdrive-liff
+credentials-file: ./cloudflare/credentials.json
+
+ingress:
+  - hostname: testdrive-liff.yourdomain.com
+    service: http://localhost:3000
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 10s
+  - service: http_status:404
+
+logLevel: info
+logDirectory: ./logs

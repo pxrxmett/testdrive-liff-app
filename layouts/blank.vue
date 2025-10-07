@@ -1,0 +1,19 @@
+<!-- src/layouts/blank.vue -->
+<template>
+  <div class="blank-layout">
+    <nuxt />
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'BlankLayout'
+}
+</script>
+
+<style scoped>
+.blank-layout {
+  min-height: 100vh;
+  width: 100%;
+}
+</style>

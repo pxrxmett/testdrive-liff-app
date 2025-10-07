@@ -1,0 +1,47 @@
+{
+  "name": "testdrive-liff-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate",
+    "lint:js": "eslint --ext \".js,.vue\" --ignore-path .gitignore .",
+    "lint": "npm run lint:js",
+    "tunnel:quick-start": "./scripts/quick-tunnel.sh",
+    "tunnel:login": "cloudflared tunnel login",
+    "tunnel:setup": "cloudflared tunnel create testdrive-liff",
+    "tunnel:route": "cloudflared tunnel route dns testdrive-liff",
+    "tunnel:list": "cloudflared tunnel list",
+    "tunnel:delete": "cloudflared tunnel delete testdrive-liff"
+  },
+  "dependencies": {
+    "@line/liff": "^2.25.1",
+    "@nuxtjs/axios": "^5.13.6",
+    "@nuxtjs/dotenv": "^1.4.2",
+    "@nuxtjs/proxy": "^2.1.0",
+    "caniuse-lite": "^1.0.30001737",
+    "core-js": "^3.15.1",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "lucide-react": "^0.487.0",
+    "lucide-vue": "^0.487.0",
+    "nuxt": "^2.15.7",
+    "signature_pad": "^5.0.7",
+    "vue-qrcode-reader": "^5.7.1"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.14.7",
+    "@nuxtjs/eslint-config": "^6.0.1",
+    "@nuxtjs/eslint-module": "^3.0.2",
+    "@nuxtjs/tailwindcss": "^4.2.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^7.29.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-nuxt": "^2.0.0",
+    "eslint-plugin-vue": "^7.12.1",
+    "postcss": "^8.3.5",
+    "prettier": "^2.3.2"
+  }
+}
