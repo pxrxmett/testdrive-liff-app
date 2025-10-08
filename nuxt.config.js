@@ -43,51 +43,55 @@ export default {
   ],
   
   axios: {
-    proxy: true,
+    // ใน production ใช้ direct URL, ใน dev ใช้ proxy
+    baseURL: process.env.NODE_ENV === 'production' 
+      ? (process.env.API_URL || 'https://isuzu-liff.up.railway.app/api')
+      : '/api',
+    
+    // เปิด proxy เฉพาะ development
+    proxy: process.env.NODE_ENV !== 'production',
+    
     headers: {
       common: {
         'Accept': 'application/json, text/plain, */*'
       }
     },
-    timeout: 30000
+    timeout: 30000,
+    credentials: true
   },
   
-  proxy: {
-    '/api/': {
-      target: process.env.BASE_URL || 'http://localhost:3000',
-      pathRewrite: { '^/api/': '/api/' },
-      changeOrigin: true,
-      headers: {
-        'X-Forwarded-Host': process.env.TUNNEL_URL || 'testdrive-liff.loca.lt',
-        'X-Forwarded-Proto': 'https'
+  // Proxy - ใช้เฉพาะ development
+  proxy: process.env.NODE_ENV === 'production' 
+    ? {} 
+    : {
+        '/api/': {
+          target: process.env.BASE_URL || 'http://localhost:3000',
+          pathRewrite: { '^/api/': '/api/' },
+          changeOrigin: true,
+          timeout: 60000,
+          proxyTimeout: 60000
+        }
       },
-      timeout: 60000,
-      proxyTimeout: 60000,
-      followRedirects: true
-    }
-  },
   
   publicRuntimeConfig: {
     LIFF_ID: process.env.LIFF_ID || '2006746784-e1y9NRqn',
     BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
-    API_URL: process.env.BASE_URL ? `${process.env.BASE_URL}/api` : 'http://localhost:3000/api',
-    TUNNEL_URL: process.env.TUNNEL_URL || 'testdrive-liff.loca.lt',
-    IS_TUNNEL: process.env.IS_TUNNEL !== undefined ? !!process.env.IS_TUNNEL : true
+    API_URL: process.env.API_URL || 'http://localhost:3000/api',
+    nodeEnv: process.env.NODE_ENV
   },
+  
+  privateRuntimeConfig: {},
   
   env: {
     LIFF_ID: process.env.LIFF_ID || '2006746784-e1y9NRqn',
     BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
-    API_URL: process.env.BASE_URL ? `${process.env.BASE_URL}/api` : 'http://localhost:3000/api',
-    TUNNEL_URL: process.env.TUNNEL_URL || 'testdrive-liff.loca.lt',
-    IS_TUNNEL: process.env.IS_TUNNEL !== undefined ? !!process.env.IS_TUNNEL : true
+    API_URL: process.env.API_URL || 'http://localhost:3000/api'
   },
   
   server: {
-    port: 4000,
+    port: process.env.PORT || 4000,
     host: '0.0.0.0',
-    timing: false,
-    https: false
+    timing: false
   },
   
   build: {
