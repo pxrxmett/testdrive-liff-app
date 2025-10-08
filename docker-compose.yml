@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testdrive-liff-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # Backend API URL (ชี้ไปที่ localhost:3000)
+      API_URL: ${API_URL:-http://localhost:3000/api}
+      
+      # LINE LIFF ID
+      LIFF_ID: ${LIFF_ID:-your-liff-id}
+      
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.nuxt
+    network_mode: "host"

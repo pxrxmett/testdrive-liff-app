@@ -280,7 +280,7 @@ export default {
             const token = localStorage.getItem('token')
             const headers = token ? { Authorization: `Bearer ${token}` } : {}
             
-            const response = await this.$axios.$post('/api/ocr/driving-license', formData, {
+            const response = await this.$axios.$post('/ocr/driving-license', formData, {
               headers: {
                 ...headers,
                 'Content-Type': 'multipart/form-data'

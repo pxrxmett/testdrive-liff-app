@@ -558,7 +558,7 @@ export default {
     // โหลดข้อมูลพนักงาน
     async fetchStaffData() {
       try {
-        const response = await this.$axios.get('/api/staffs');
+        const response = await this.$axios.get('/staffs');
         const staffs = response.data;
         
         // แปลงเป็น object เพื่อหาได้เร็ว - ใช้ property shorthand
@@ -579,7 +579,7 @@ export default {
       
       try {
         // เรียกใช้ API ตาม documentation
-        const response = await this.$axios.get('/api/test-drives');
+        const response = await this.$axios.get('/test-drives');
         
         if (response.data && Array.isArray(response.data)) {
           this.bookings = this.formatBookingData(response.data);

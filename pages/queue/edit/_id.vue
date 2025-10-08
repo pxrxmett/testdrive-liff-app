@@ -193,7 +193,7 @@ export default {
         const userInfo = this.$store.state.auth?.user;
         
         if (!userInfo) {
-          const response = await this.$axios.$get('/api/staffs/' + this.$store.state.auth.userId);
+          const response = await this.$axios.$get('/staffs/' + this.$store.state.auth.userId);
           this.userInfo = {
             name: response.name || `${response.first_name || ''} ${response.last_name || ''}`.trim(),
             branch: response.department || 'สาขาหลัก'
@@ -218,13 +218,13 @@ export default {
         let response;
         try {
           console.log('Trying /api/stock...');
-          response = await this.$axios.$get('/api/stock');
+          response = await this.$axios.$get('/stock');
           console.log('Response from /api/stock:', response);
         } catch (err1) {
           console.log('Failed /api/stock, trying /api/stock/vehicles...');
           // ลอง API endpoint ที่ 2: /api/stock/vehicles
           try {
-            response = await this.$axios.$get('/api/stock/vehicles');
+            response = await this.$axios.$get('/stock/vehicles');
             console.log('Response from /api/stock/vehicles:', response);
           } catch (err2) {
             console.error('Both API endpoints failed:', { err1: err1.message, err2: err2.message });
@@ -453,7 +453,7 @@ export default {
       try {
         console.log('กำลังตรวจสอบรถที่ว่างในวันที่:', this.bookingData.date);
         
-        const response = await this.$axios.$get('/api/test-drives', {
+        const response = await this.$axios.$get('/test-drives', {
           params: {
             date: this.bookingData.date
           }

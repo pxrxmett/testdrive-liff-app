@@ -300,7 +300,7 @@
           const feedbackUrl = `${window.location.origin}/feedback/${this.testDriveData.id}`
           
           // เรียก API สร้าง QR Code
-          const response = await this.$axios.post('/api/qr-code/generate', {
+          const response = await this.$axios.post('/qr-code/generate', {
             data: feedbackUrl,
             size: 200
           })
@@ -333,7 +333,7 @@
             includeNotes: this.printOptions.includeNotes
           }
           
-          const response = await this.$axios.post('/api/reports/test-drive', reportData, {
+          const response = await this.$axios.post('/reports/test-drive', reportData, {
             responseType: 'blob'
           })
           

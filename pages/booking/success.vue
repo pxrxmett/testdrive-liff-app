@@ -196,7 +196,7 @@ export default {
       try {
         // ดึงข้อมูลรุ่นรถจาก API
         if (this.$axios) {
-          const response = await this.$axios.$get('/api/stock/vehicles', {
+          const response = await this.$axios.$get('/stock/vehicles', {
             params: { status: 'available' }
           });
           

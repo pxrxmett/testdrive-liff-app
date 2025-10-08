@@ -126,7 +126,7 @@ export const actions = {
     }
 
     try {
-      const userData = await this.$axios.$get('/api/auth/me', {
+      const userData = await this.$axios.$get('/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
       commit('setLastCheck', now)
@@ -161,7 +161,7 @@ export const actions = {
 
       console.log('📤 ข้อมูลที่จะส่งไป /api/line-integration/check:', requestData)
       
-      const response = await this.$axios.$post('/api/line-integration/check', requestData)
+      const response = await this.$axios.$post('/line-integration/check', requestData)
       
       console.log('✅ Response จาก check API:', response)
       
@@ -307,7 +307,7 @@ export const actions = {
         throw new Error('ข้อมูลไม่ถูกต้อง: ' + validation.errors.join(', '))
       }
 
-      const response = await this.$axios.$post('/api/line-integration/link', requestData)
+      const response = await this.$axios.$post('/line-integration/link', requestData)
       
       console.log('✅ Response จาก link API:', response)
 
@@ -408,7 +408,7 @@ export const actions = {
       
       console.log('กำลังเรียก API ล็อกอินด้วย LINE')
       
-      const response = await this.$axios.$post('/api/auth/line-login', {
+      const response = await this.$axios.$post('/auth/line-login', {
         accessToken,
         lineUserId: lineProfile.userId
       })

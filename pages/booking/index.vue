@@ -458,7 +458,7 @@ export default {
           // ตรวจสอบว่าเป็นพนักงานหรือไม่
           if (this.$axios) {
             try {
-              const checkResponse = await this.$axios.$post('/api/line-integration/check', { 
+              const checkResponse = await this.$axios.$post('/line-integration/check', { 
                 lineUserId: profile.userId 
               });
               
@@ -533,7 +533,7 @@ export default {
       try {
         // ดึงข้อมูลรุ่นรถจาก API
         if (this.$axios) {
-          const response = await this.$axios.$get('/api/stock/vehicles', {
+          const response = await this.$axios.$get('/stock/vehicles', {
             params: { status: 'available' }
           });
           
@@ -838,7 +838,7 @@ export default {
         // ส่งข้อมูลไปยัง API
         if (this.$axios) {
           try {
-            const response = await this.$axios.$post('/api/test-drives', bookingData, {
+            const response = await this.$axios.$post('/test-drives', bookingData, {
               headers: {
                 'Content-Type': 'application/json'
               }
@@ -905,7 +905,7 @@ export default {
        // ส่งข้อมูลไปยัง API
        if (this.$axios) {
          try {
-           const response = await this.$axios.$post('/api/test-drives', bookingData, {
+           const response = await this.$axios.$post('/test-drives', bookingData, {
              headers: {
                'Content-Type': 'application/json'
              }

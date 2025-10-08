@@ -74,7 +74,7 @@ export default {
         }
         
         // เรียกใช้ API เชื่อมโยงบัญชี
-        const response = await this.$axios.$post('/api/line-integration/link', {
+        const response = await this.$axios.$post('/line-integration/link', {
           lineId: this.lineProfile.userId,
           staffId: this.staffId
         })

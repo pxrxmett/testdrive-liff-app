@@ -341,7 +341,7 @@ export default {
         }
         
         // ส่งข้อมูล lineUserId ไปกับ API (ไม่ต้องการ token)
-        checkResponse = await this.$axios.$post('/api/line-integration/check', { 
+        checkResponse = await this.$axios.$post('/line-integration/check', { 
           lineUserId
         })
         
@@ -469,7 +469,7 @@ export default {
         console.log('Staff Code:', this.staffInfo.staff_code)
         
         // เรียก API เพื่อดึงข้อมูลคิวทั้งหมด (ไม่ส่ง parameters เพราะ API ยังไม่รองรับ)
-        const response = await this.$axios.$get('/api/test-drives', {
+        const response = await this.$axios.$get('/test-drives', {
           headers: { Authorization: `Bearer ${token}` }
         })
         

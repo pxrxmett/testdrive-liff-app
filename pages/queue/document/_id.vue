@@ -706,7 +706,7 @@ export default {
           )
         } else {
           // สร้างเอกสารใหม่
-          response = await this.$axios.$post('/api/test-drives', this.formData)
+          response = await this.$axios.$post('/test-drives', this.formData)
         }
         
         // แสดงข้อความสำเร็จ
