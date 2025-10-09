@@ -159,19 +159,17 @@ export const actions = {
         lineUserId
       }
 
-      console.log('📤 ข้อมูลที่จะส่งไป /api/line-integration/check:', requestData)
+      // เปลี่ยนข้อความ log ให้ตรงกับ endpoint จริง (ไม่มี /api/)
+      console.log('📤 ข้อมูลที่จะส่งไป /line-integration/check:', requestData)
       
       const response = await this.$axios.$post('/line-integration/check', requestData)
       
       console.log('✅ Response จาก check API:', response)
       
-      // ✅ ปรับปรุงการจัดการ response
       if (response) {
-        // ตรวจสอบว่า response มีข้อมูลอะไรบ้าง
         const isRegistered = response.registered || response.success || response.isLinked || false
         
         if (isRegistered && response.staff) {
-          // บันทึกข้อมูลพนักงาน
           commit('setStaffInfo', response.staff)
           localStorage.setItem('staffInfo', JSON.stringify(response.staff))
           
@@ -186,7 +184,6 @@ export const actions = {
             staff_code: response.staff.staff_code
           }
         } else if (isRegistered && response.staffInfo) {
-          // กรณีที่ใช้ key เป็น staffInfo
           commit('setStaffInfo', response.staffInfo)
           localStorage.setItem('staffInfo', JSON.stringify(response.staffInfo))
           
@@ -209,29 +206,24 @@ export const actions = {
     } catch (error) {
       console.error('❌ เกิดข้อผิดพลาดในการตรวจสอบการเชื่อมโยง LINE:', error)
       
-      // ✅ เพิ่ม detailed error logging
       if (error.response) {
         const { status, data } = error.response
         
-        // 🔍 แสดงรายละเอียด error response ทั้งหมด
         console.error('📋 API Error Details:', {
           status,
-          data, // แสดงข้อมูล error ทั้งหมด
+          data,
           url: error.config?.url,
           method: error.config?.method,
           requestData: error.config?.data
         })
         
-        // 🔍 แสดง error message จาก Backend แบบละเอียด
         console.error('🚨 Backend Error Response:', data)
         
         if (status === 404) {
           return { registered: false, message: 'ยังไม่ได้เชื่อมโยงบัญชี' }
         } else if (status === 400) {
-          // 🔍 แสดงข้อผิดพลาดแบบละเอียด
           let errorMessage = 'ข้อมูลไม่ถูกต้อง'
           
-          // ตรวจสอบ error message หลายรูปแบบ
           if (data?.message) {
             errorMessage = data.message
             console.error('🔍 Error Message:', data.message)
@@ -242,7 +234,6 @@ export const actions = {
             errorMessage = data.errors.join(', ')
             console.error('🔍 Errors Array:', data.errors)
           } else if (data?.errors && typeof data.errors === 'object') {
-            // กรณี validation errors เป็น object
             const errorList = Object.values(data.errors).flat()
             errorMessage = errorList.join(', ')
             console.error('🔍 Validation Errors:', data.errors)
@@ -277,9 +268,9 @@ export const actions = {
       if (state.staffInfo && state.staffInfo.staff_code) {
         staffCode = state.staffInfo.staff_code
       } else {
-        // ถ้าไม่มี staffCode ให้ดึงจาก API staffs
+        // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
         try {
-          const staffData = await this.$axios.$get(`/api/staffs/${staffId}`)
+          const staffData = await this.$axios.$get(`/staffs/${staffId}`)
           staffCode = staffData.staff_code
         } catch (error) {
           throw new Error('ไม่สามารถดึงข้อมูล staff_code ได้')
@@ -290,17 +281,15 @@ export const actions = {
         throw new Error('ไม่พบ staff_code สำหรับการเชื่อมโยง')
       }
 
-      // ✅ ปรับปรุงข้อมูลที่ส่งให้ตรงกับ API specification
       const requestData = {
         lineUserId,
         staffCode,
         lineAccessToken
       }
 
-      // ✅ ตรวจสอบข้อมูลก่อนส่ง
-      console.log('📤 ข้อมูลที่จะส่งไป /api/line-integration/link:', requestData)
+      // ปรับข้อความ log ให้ตรง endpoint จริง
+      console.log('📤 ข้อมูลที่จะส่งไป /line-integration/link:', requestData)
       
-      // ตรวจสอบความถูกต้องของข้อมูล
       const validation = validateLinkDataNew(requestData)
       if (!validation.isValid) {
         console.error('❌ ข้อมูลไม่ถูกต้อง:', validation.errors)
@@ -312,7 +301,6 @@ export const actions = {
       console.log('✅ Response จาก link API:', response)
 
       if (response && response.success) {
-        // อัปเดตข้อมูลใน store
         if (response.staff) {
           commit('setStaffInfo', response.staff)
           localStorage.setItem('staffInfo', JSON.stringify(response.staff))
@@ -325,26 +313,21 @@ export const actions = {
     } catch (error) {
       console.error('❌ เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี LINE:', error)
       
-      // ✅ เพิ่ม detailed error logging
       if (error.response) {
         const { status, data } = error.response
         
-        // 🔍 แสดงรายละเอียด error response ทั้งหมด
         console.error('📋 Link API Error Details:', {
           status,
-          data, // แสดงข้อมูล error ทั้งหมด
+          data,
           url: error.config?.url,
           method: error.config?.method,
           requestData: error.config?.data
         })
         
-        // 🔍 แสดง error message จาก Backend แบบละเอียด
         console.error('🚨 Backend Link Error Response:', data)
         
-        // แสดงข้อผิดพลาดที่เป็นประโยชน์
         let errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมโยง'
         
-        // ตรวจสอบ error message หลายรูปแบบ
         if (data?.message) {
           errorMessage = data.message
           console.error('🔍 Link Error Message:', data.message)
@@ -355,7 +338,6 @@ export const actions = {
           errorMessage = 'ข้อมูลไม่ถูกต้อง: ' + data.errors.join(', ')
           console.error('🔍 Link Errors Array:', data.errors)
         } else if (data?.errors && typeof data.errors === 'object') {
-          // กรณี validation errors เป็น object
           const errorList = Object.values(data.errors).flat()
           errorMessage = 'ข้อมูลไม่ถูกต้อง: ' + errorList.join(', ')
           console.error('🔍 Link Validation Errors:', data.errors)
@@ -394,7 +376,6 @@ export const actions = {
     commit('setLineAccessToken', accessToken)
     
     try {
-      // ตรวจสอบการเชื่อมโยงบัญชี LINE ก่อน
       const checkResult = await dispatch('checkLineRegistration')
       
       if (!checkResult.registered) {
@@ -481,7 +462,8 @@ export const actions = {
         return { success: false, error: 'ไม่พบ token' }
       }
       
-      const staffResponse = await this.$axios.$get(`/api/staffs/${staffId}`, {
+      // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
+      const staffResponse = await this.$axios.$get(`/staffs/${staffId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
