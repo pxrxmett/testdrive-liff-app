@@ -48,17 +48,36 @@ export default {
     }
   },
   
-  mounted() {
+  async mounted() {
     try {
-      // ดึงข้อมูล LINE จาก localStorage
+      // ดึงข้อมูล LINE จาก localStorage หรือ LIFF
       const lineProfileStr = localStorage.getItem('lineProfile')
-      
-      if (!lineProfileStr) {
-        console.error('ไม่พบข้อมูล LINE Profile')
-        return
+
+      if (lineProfileStr) {
+        this.lineProfile = JSON.parse(lineProfileStr)
       }
-      
-      this.lineProfile = JSON.parse(lineProfileStr)
+
+      // ถ้าไม่มีใน localStorage ให้ดึงจาก LIFF
+      if (!this.lineProfile && window.liff && window.liff.isLoggedIn()) {
+        const [profile, accessToken] = await Promise.all([
+          window.liff.getProfile(),
+          window.liff.getAccessToken()
+        ])
+
+        this.lineProfile = {
+          userId: profile.userId,
+          displayName: profile.displayName,
+          pictureUrl: profile.pictureUrl,
+          accessToken
+        }
+
+        // บันทึกลง localStorage
+        localStorage.setItem('lineProfile', JSON.stringify(this.lineProfile))
+      }
+
+      if (!this.lineProfile) {
+        console.error('ไม่พบข้อมูล LINE Profile')
+      }
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการดึงข้อมูล LINE Profile:', error)
     }
@@ -75,8 +94,9 @@ export default {
         
         // เรียกใช้ API เชื่อมโยงบัญชี
         const response = await this.$axios.$post('/line-integration/link', {
-          lineId: this.lineProfile.userId,
-          staffId: this.staffId
+          lineUserId: this.lineProfile.userId, // ✅ Fixed: lineId → lineUserId
+          staffCode: this.staffId, // Use staffCode for consistency
+          lineAccessToken: this.lineProfile.accessToken
         })
         
         if (response.success) {

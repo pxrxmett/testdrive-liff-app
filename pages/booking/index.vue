@@ -537,7 +537,7 @@ export default {
             params: { status: 'available' }
           });
           
-          console.log('API Response from /api/stock/vehicles:', response);
+          console.log('API Response from /stock/vehicles:', response);
           
           if (Array.isArray(response)) {
             // ตรวจสอบโครงสร้างของข้อมูลที่ได้รับ

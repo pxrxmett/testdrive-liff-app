@@ -201,7 +201,7 @@ export default {
         console.log('Fetching booking ID:', bookingId);
         
         // เรียกใช้ API เพื่อดึงข้อมูลการจอง
-        const response = await this.$axios.$get(`/api/test-drives/${bookingId}`);
+        const response = await this.$axios.$get(`/test-drives/${bookingId}`);
         console.log('API Response:', response);
         
         // แปลงข้อมูลจาก API เป็นรูปแบบที่ใช้ในคอมโพเนนท์
@@ -275,7 +275,7 @@ export default {
       try {
         this.processingCancel = true;
         // เรียกใช้ API เพื่อยกเลิกการจอง
-        await this.$axios.$delete(`/api/test-drives/${this.booking.id}`);
+        await this.$axios.$delete(`/test-drives/${this.booking.id}`);
         
         // ปิด modal
         this.showCancelConfirm = false;

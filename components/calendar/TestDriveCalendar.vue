@@ -599,7 +599,7 @@ export default {
         
         // แสดงข้อความ error ที่ชัดเจนขึ้น
         if (error.response?.status === 404) {
-          this.error = 'API /api/test-drives ยังไม่ได้ถูก implement บนเซิร์ฟเวอร์';
+          this.error = 'API /test-drives ยังไม่ได้ถูก implement บนเซิร์ฟเวอร์';
         } else if (error.response?.status === 401) {
           this.error = 'ไม่มีสิทธิ์เข้าถึงข้อมูล กรุณาเข้าสู่ระบบใหม่';
         } else if (error.response?.status === 403) {

@@ -375,7 +375,7 @@ export default {
       
       // ดึงข้อมูลพนักงาน
       try {
-        const staffResponse = await this.$axios.$get(`/api/staffs/${staffId}`, {
+        const staffResponse = await this.$axios.$get(`/staffs/${staffId}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         console.log('ข้อมูลพนักงานที่ได้รับ:', staffResponse)
@@ -693,7 +693,7 @@ export default {
       try {
         this.loading = true
         
-        await this.$axios.$patch(`/api/test-drives/${this.selectedQueue.id}`, {
+        await this.$axios.$patch(`/test-drives/${this.selectedQueue.id}`, {
           status: newStatus
         })
         

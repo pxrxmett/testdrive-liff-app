@@ -165,7 +165,7 @@ export default {
     async fetchBookingDetails() {
       try {
         if (this.$axios && this.bookingId) {
-          const response = await this.$axios.$get(`/api/test-drives/${this.bookingId}`);
+          const response = await this.$axios.$get(`/test-drives/${this.bookingId}`);
           this.bookingData = response;
           
           // ดึงข้อมูลรุ่นรถเพิ่มเติม
@@ -200,7 +200,7 @@ export default {
             params: { status: 'available' }
           });
           
-          console.log('API Response from /api/stock/vehicles:', response);
+          console.log('API Response from /stock/vehicles:', response);
           
           if (Array.isArray(response) && response.length > 0) {
             // แมปข้อมูลรถให้ถูกต้อง

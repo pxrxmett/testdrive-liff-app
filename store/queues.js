@@ -63,8 +63,8 @@ export const actions = {
       }
 
       // เรียก API โดยส่ง staffCode เพื่อกรองคิว
-      const response = await this.$axios.$get(`/api/test-drives`, {
-        params: { 
+      const response = await this.$axios.$get(`/test-drives`, {
+        params: {
           staffCode,
           ...state.filters
         }
@@ -84,7 +84,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$patch(`/api/test-drives/${id}`, data)
+      const response = await this.$axios.$patch(`/test-drives/${id}`, data)
       commit('UPDATE_QUEUE', response.data)
 
       return response.data
