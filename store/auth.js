@@ -114,34 +114,125 @@ export const actions = {
     return false
   },
 
-  async refreshAuth({ commit, state }) {
+  // ✅ IMPROVED: Enhanced token refresh with better error handling
+  async refreshAuth({ commit, state, dispatch }) {
     const token = state.token || localStorage.getItem('token')
     if (!token) {
+      console.log('⚠️ No token found, cannot refresh')
       return false
     }
 
     const now = Date.now()
+
+    // Only check every 5 minutes to reduce server load
     if (state.lastCheck && (now - state.lastCheck < 5 * 60 * 1000)) {
+      console.log('✅ Token recently checked, skipping validation')
       return true
     }
 
     try {
+      console.log('🔄 Validating token with backend...')
+
       const userData = await this.$axios.$get('/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
+
       commit('setLastCheck', now)
-      
+
       if (userData && userData.staff_code) {
         commit('setStaffCode', userData.staff_code)
         localStorage.setItem('staffCode', userData.staff_code)
       }
-      
+
+      console.log('✅ Token is valid')
       return true
+
     } catch (error) {
+      console.error('❌ Token validation failed:', error.response?.status)
+
+      // Token is invalid or expired
       if (error.response?.status === 401) {
+        console.log('🔄 Token expired, attempting to re-authenticate with LINE...')
+
+        // Try to re-authenticate using LINE if still logged in
+        if (window.liff && window.liff.isLoggedIn()) {
+          try {
+            const lineAccessToken = await window.liff.getAccessToken()
+            const lineProfile = state.lineProfile || JSON.parse(localStorage.getItem('lineProfile') || '{}')
+
+            if (lineAccessToken && lineProfile.userId) {
+              console.log('🔄 Re-authenticating with LINE token...')
+
+              const loginResult = await dispatch('loginWithLine', {
+                lineProfile,
+                lineAccessToken
+              })
+
+              if (loginResult.success) {
+                console.log('✅ Re-authentication successful')
+                return true
+              }
+            }
+          } catch (reAuthError) {
+            console.error('❌ Re-authentication failed:', reAuthError)
+          }
+        }
+
+        // If re-authentication failed, clear auth state
+        console.log('🚫 Cannot refresh token, clearing auth state')
+        commit('clearAuth')
         return false
       }
+
+      // For other errors, assume token is still valid
+      console.warn('⚠️ Token validation error, but assuming valid:', error.message)
       return true
+    }
+  },
+
+  // ✅ NEW: Check if LINE token is expired
+  async checkLineTokenExpiration({ state, dispatch }) {
+    if (!window.liff || !window.liff.isLoggedIn()) {
+      console.log('ℹ️ LINE not logged in, skipping token check')
+      return false
+    }
+
+    try {
+      // Try to get LINE access token
+      const accessToken = await window.liff.getAccessToken()
+
+      if (!accessToken) {
+        console.warn('⚠️ LINE access token is missing')
+        return false
+      }
+
+      // Update token in store if changed
+      const currentToken = state.lineAccessToken
+      if (accessToken !== currentToken) {
+        console.log('🔄 LINE access token updated')
+        this.commit('auth/setLineAccessToken', accessToken)
+      }
+
+      return true
+    } catch (error) {
+      console.error('❌ LINE token check failed:', error)
+
+      // If token is invalid, logout from LINE and clear auth
+      if (error.code === 'INVALID_ACCESS_TOKEN') {
+        console.log('🚫 LINE token expired, logging out...')
+
+        try {
+          window.liff.logout()
+        } catch (logoutError) {
+          console.error('❌ LINE logout failed:', logoutError)
+        }
+
+        // Clear auth state
+        dispatch('logout')
+        return false
+      }
+
+      return false
     }
   },
 
