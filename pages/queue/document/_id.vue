@@ -394,7 +394,7 @@ export default {
       this.loading = true
       try {
         // ดึงข้อมูลเอกสารเดิมจาก API
-        const response = await this.$axios.$get(`/api/test-drives/${this.$route.params.id}`)
+        const response = await this.$axios.$get(`/test-drives/${this.$route.params.id}`)
         if (response) {
           // นำข้อมูลมากรอกในฟอร์ม
           this.populateFormData(response)
@@ -701,7 +701,7 @@ export default {
         if (isEdit) {
           // อัพเดตเอกสาร
           response = await this.$axios.$patch(
-            `/api/test-drives/${this.$route.params.id}`,
+            `/test-drives/${this.$route.params.id}`,
             this.formData
           )
         } else {

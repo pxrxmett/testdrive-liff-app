@@ -208,18 +208,18 @@
           const testDriveId = this.$route.params.id
   
           // โหลดข้อมูลการทดลองขับ
-          const testDriveResponse = await this.$axios.get(`/api/test-drives/${testDriveId}`)
+          const testDriveResponse = await this.$axios.get(`/test-drives/${testDriveId}`)
           this.testDriveData = testDriveResponse.data
   
           // โหลดข้อมูลรถ
           if (this.testDriveData.vehicle_id) {
-            const vehicleResponse = await this.$axios.get(`/api/stock/${this.testDriveData.vehicle_id}`)
+            const vehicleResponse = await this.$axios.get(`/stock/${this.testDriveData.vehicle_id}`)
             this.vehicleData = vehicleResponse.data
           }
   
           // โหลดข้อมูลพนักงาน
           if (this.testDriveData.responsible_staff) {
-            const staffResponse = await this.$axios.get(`/api/staffs/${this.testDriveData.responsible_staff}`)
+            const staffResponse = await this.$axios.get(`/staffs/${this.testDriveData.responsible_staff}`)
             this.staffInfo = staffResponse.data
           }
   
@@ -295,11 +295,11 @@
           status: 'ongoing',
           start_time: new Date().toISOString()
         }
-        await this.$axios.patch(`/api/test-drives/${this.$route.params.id}`, payload)
+        await this.$axios.patch(`/test-drives/${this.$route.params.id}`, payload)
         
         // อัพเดทสถานะรถเป็น in_test
         if (this.testDriveData.vehicle_id) {
-          await this.$axios.patch(`/api/stock/vehicles/${this.testDriveData.vehicle_id}/status`, {
+          await this.$axios.patch(`/stock/vehicles/${this.testDriveData.vehicle_id}/status`, {
             status: 'in_test'
           })
         }
@@ -310,11 +310,11 @@
         const payload = {
           status: 'cancelled'
         }
-        await this.$axios.patch(`/api/test-drives/${this.$route.params.id}`, payload)
+        await this.$axios.patch(`/test-drives/${this.$route.params.id}`, payload)
         
         // อัพเดทสถานะรถกลับเป็น available
         if (this.testDriveData.vehicle_id) {
-          await this.$axios.patch(`/api/stock/vehicles/${this.testDriveData.vehicle_id}/status`, {
+          await this.$axios.patch(`/stock/vehicles/${this.testDriveData.vehicle_id}/status`, {
             status: 'available'
           })
         }

@@ -214,18 +214,18 @@ export default {
       try {
         console.log('กำลังดึงข้อมูลรถทั้งหมด...');
         
-        // ลอง API endpoint ที่ 1: /api/stock
+        // ลอง API endpoint ที่ 1: /stock
         let response;
         try {
-          console.log('Trying /api/stock...');
+          console.log('Trying /stock...');
           response = await this.$axios.$get('/stock');
-          console.log('Response from /api/stock:', response);
+          console.log('Response from /stock:', response);
         } catch (err1) {
-          console.log('Failed /api/stock, trying /api/stock/vehicles...');
-          // ลอง API endpoint ที่ 2: /api/stock/vehicles
+          console.log('Failed /stock, trying /stock/vehicles...');
+          // ลอง API endpoint ที่ 2: /stock/vehicles
           try {
             response = await this.$axios.$get('/stock/vehicles');
-            console.log('Response from /api/stock/vehicles:', response);
+            console.log('Response from /stock/vehicles:', response);
           } catch (err2) {
             console.error('Both API endpoints failed:', { err1: err1.message, err2: err2.message });
             throw err2;
@@ -361,7 +361,7 @@ export default {
       
       try {
         const bookingId = this.$route.params.id;
-        const response = await this.$axios.$get(`/api/test-drives/${bookingId}`);
+        const response = await this.$axios.$get(`/test-drives/${bookingId}`);
         
         console.log('ข้อมูลการจองจาก API:', response);
         
@@ -599,7 +599,7 @@ export default {
         
         console.log('ข้อมูลที่จะส่งไปอัพเดต:', apiUpdateData);
         
-        const response = await this.$axios.$patch(`/api/test-drives/${bookingId}`, apiUpdateData);
+        const response = await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
         
         console.log('ผลการอัพเดตข้อมูล:', response);
         
@@ -635,7 +635,7 @@ export default {
           vehicleStatus = 'available';
         }
         
-        await this.$axios.$patch(`/api/stock/vehicles/${this.bookingData.vehicleId}/status`, {
+        await this.$axios.$patch(`/stock/vehicles/${this.bookingData.vehicleId}/status`, {
           status: vehicleStatus
         });
         
