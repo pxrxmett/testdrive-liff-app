@@ -2,6 +2,18 @@
   "name": "testdrive-liff-app",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0 <=22.x",
+    "npm": ">=8.0.0"
+  },
+  "resolutions": {
+    "postcss-nesting": "^12.0.1",
+    "urix": "npm:noop-package@1.0.0",
+    "stable": "npm:noop-package@1.0.0",
+    "source-map-url": "npm:noop-package@1.0.0",
+    "source-map-resolve": "npm:noop-package@1.0.0",
+    "rimraf": "^5.0.5"
+  },
   "scripts": {
     "dev": "nuxt",
     "build": "nuxt build",
