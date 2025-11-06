@@ -40,13 +40,17 @@ export default {
         this.isLoading = true
         this.error = null
 
-        await this.$store.dispatch('auth/linkStaffLine', this.staffId)
-        await this.$store.dispatch('auth/loginWithLine')
-        
+        // เชื่อมโยง LINE กับ Staff Code
+        await this.$store.dispatch('auth/linkLineAccount', { staffId: this.staffId })
+
+        // เช็คการเชื่อมโยงอีกครั้งและรับ token
+        await this.$store.dispatch('auth/checkLineRegistration')
+
+        // เข้าสู่ระบบสำเร็จ - ไปหน้า home
         this.$router.push('/')
       } catch (error) {
         console.error('Link account error:', error)
-        this.error = 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่'
+        this.error = error.message || 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่'
       } finally {
         this.isLoading = false
       }

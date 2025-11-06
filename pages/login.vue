@@ -218,7 +218,11 @@ export default {
           console.log('พบการเชื่อมโยงบัญชี พยายามล็อกอิน...');
           await this.attemptSystemLogin();
         } else {
-          console.log('ยังไม่ได้เชื่อมโยงบัญชี');
+          console.log('ยังไม่ได้เชื่อมโยงบัญชี - Redirect ไปหน้าเชื่อมโยง');
+          // Redirect ไปหน้าเชื่อมโยงบัญชี
+          setTimeout(() => {
+            this.$router.push('/staff/link-account');
+          }, 2000); // รอ 2 วินาทีให้ผู้ใช้เห็นข้อความ
         }
 
         // เก็บข้อมูล debug
