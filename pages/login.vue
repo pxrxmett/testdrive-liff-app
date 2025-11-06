@@ -2,9 +2,7 @@
   <div class="login-page">
     <div class="login-container">
       <div class="login-header">
-        <div class="logo">
-          <img src="/logo.png" alt="Logo" class="logo-image" />
-        </div>
+        <!-- Logo removed - add your logo.png to /static/ folder if needed -->
         <h1>ระบบจองทดลองขับรถ</h1>
         <p>เข้าสู่ระบบผ่าน LINE</p>
       </div>
