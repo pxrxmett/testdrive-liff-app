@@ -1,16 +1,27 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
-RUN npm install
+# Install dependencies
+RUN npm ci --legacy-peer-deps
 
+# Copy application files
 COPY . .
 
-EXPOSE 3000
+# Build the application
+RUN npm run build
 
+# Expose port
+EXPOSE 4000
+
+# Environment variables
+ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=4000
 
-CMD ["npm", "run", "dev"]
+# Start command
+CMD ["npm", "run", "start"]
