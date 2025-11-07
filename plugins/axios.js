@@ -1,5 +1,8 @@
 // plugins/axios.js
 export default function ({ $axios, redirect, store }) {
+  // ✅ Confirm axios plugin loaded with latest token detection code
+  console.log('🔌 Axios plugin initialized - v2.0 with comprehensive token detection');
+
   // ตั้งค่าตัวแปรสำหรับตรวจสอบโหมดและสภาพแวดล้อม
   const isDev = process.env.NODE_ENV === 'development';
   const log = isDev ? console.log : () => {};
@@ -108,6 +111,8 @@ export default function ({ $axios, redirect, store }) {
   // Response Interceptor - เมื่อได้รับการตอบกลับจากเซิร์ฟเวอร์
   // ================================================================
   $axios.onResponse(response => {
+    // Always log responses to confirm interceptor is running
+    console.log(`📥 API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
     log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
 
     // DEBUG: แสดง response structure (แม้ใน production)
