@@ -109,22 +109,34 @@ export default function ({ $axios, redirect, store }) {
   // ================================================================
   $axios.onResponse(response => {
     log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
-    
+
+    // DEBUG: แสดง response structure (แม้ใน production)
+    if (response.config.url?.includes('/line-integration/check')) {
+      console.log('🔍 DEBUG /line-integration/check response:', {
+        data: response.data,
+        hasToken: !!response.data?.token,
+        hasAccessToken: !!response.data?.access_token,
+        hasAccessToken2: !!response.data?.accessToken
+      });
+    }
+
     // ตรวจสอบและบันทึก token ใหม่ถ้ามี
     const newToken = response.data?.token || response.data?.access_token || response.data?.accessToken;
-    
+
     if (newToken && process.client) {
       try {
         localStorage.setItem(TOKEN_KEY, newToken);
-        
+
         if (store?.commit) {
           store.commit('auth/setToken', newToken);
           store.commit('auth/setAuth', true);
-          log('🔑 Token updated');
+          console.log('🔑 Token saved to localStorage and store:', newToken.substring(0, 20) + '...');
         }
       } catch (e) {
         error('❌ Failed to save token:', e);
       }
+    } else if (response.config.url?.includes('/line-integration/check')) {
+      console.warn('⚠️ No token found in response from /line-integration/check');
     }
     
     // ตรวจสอบและบันทึกข้อมูลพนักงานถ้ามี
