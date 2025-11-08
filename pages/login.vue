@@ -210,13 +210,33 @@ export default {
 
         // เรียกใช้ store action
         const result = await this.$store.dispatch('auth/checkLineRegistration');
-        
+
         this.connectionResult = result;
-        
-        // ถ้าพบการเชื่อมโยง ให้พยายามล็อกอิน
+
+        // ถ้าพบการเชื่อมโยง
         if (result.registered) {
-          console.log('พบการเชื่อมโยงบัญชี พยายามล็อกอิน...');
-          await this.attemptSystemLogin();
+          console.log('✅ พบการเชื่อมโยงบัญชี!');
+
+          // ✅ ตรวจสอบว่ามี token หรือไม่
+          const token = result.token || this.$store.state.auth?.token || localStorage.getItem('token');
+
+          if (token) {
+            console.log('✅ มี token แล้ว - Redirect ไปหน้า Dashboard');
+            // มี token แล้ว ไม่ต้อง login อีก แค่ redirect
+            setTimeout(() => {
+              const redirectPath = localStorage.getItem('redirectAfterLogin');
+              if (redirectPath && redirectPath !== '/login') {
+                localStorage.removeItem('redirectAfterLogin');
+                this.$router.push(redirectPath);
+              } else {
+                this.$router.push('/');
+              }
+            }, 500);
+          } else {
+            console.log('⏳ ยังไม่มี token - พยายามล็อกอิน...');
+            // ถ้ายังไม่มี token ให้ล็อกอินผ่าน /auth/line-login
+            await this.attemptSystemLogin();
+          }
         } else {
           console.log('ยังไม่ได้เชื่อมโยงบัญชี - Redirect ไปหน้าเชื่อมโยง');
           // Redirect ไปหน้าเชื่อมโยงบัญชี

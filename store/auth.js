@@ -236,7 +236,7 @@ export const actions = {
     }
   },
 
-  // ✅ แก้ไข checkLineRegistration ให้ส่งข้อมูลที่ถูกต้อง
+  // ✅ แก้ไข checkLineRegistration ให้บันทึก token ด้วย
   async checkLineRegistration({ commit, state }, options = {}) {
     try {
       const lineUserId = state.lineProfile?.userId
@@ -252,47 +252,67 @@ export const actions = {
 
       // เปลี่ยนข้อความ log ให้ตรงกับ endpoint จริง (ไม่มี /api/)
       console.log('📤 ข้อมูลที่จะส่งไป /line-integration/check:', requestData)
-      
+
       const response = await this.$axios.$post('/line-integration/check', requestData)
-      
+
       console.log('✅ Response จาก check API:', response)
-      
+
       if (response) {
         const isRegistered = response.registered || response.success || response.isLinked || false
-        
+
+        // ✅ CRITICAL: บันทึก token ถ้า Backend ส่งมา
+        const token = response.token || response.access_token || response.accessToken
+        if (token) {
+          console.log('✅ Token found in /line-integration/check response - saving...')
+          commit('setToken', token)
+          commit('setAuth', true)
+          localStorage.setItem('token', token)
+          localStorage.setItem('access_token', token) // เก็บทั้ง 2 key เพื่อความชัวร์
+          console.log('✅ Token saved:', token.substring(0, 20) + '...')
+        }
+
+        // ✅ บันทึกข้อมูล user ถ้ามี
+        if (response.user) {
+          commit('setUser', response.user)
+          localStorage.setItem('user', JSON.stringify(response.user))
+          console.log('✅ User data saved:', response.user)
+        }
+
         if (isRegistered && response.staff) {
           commit('setStaffInfo', response.staff)
           localStorage.setItem('staffInfo', JSON.stringify(response.staff))
-          
+
           if (response.staff.staff_code) {
             commit('setStaffCode', response.staff.staff_code)
             localStorage.setItem('staffCode', response.staff.staff_code)
           }
-          
-          return { 
-            registered: true, 
+
+          return {
+            registered: true,
             staffInfo: response.staff,
-            staff_code: response.staff.staff_code
+            staff_code: response.staff.staff_code,
+            token: token
           }
         } else if (isRegistered && response.staffInfo) {
           commit('setStaffInfo', response.staffInfo)
           localStorage.setItem('staffInfo', JSON.stringify(response.staffInfo))
-          
+
           if (response.staffInfo.staff_code) {
             commit('setStaffCode', response.staffInfo.staff_code)
             localStorage.setItem('staffCode', response.staffInfo.staff_code)
           }
-          
-          return { 
-            registered: true, 
+
+          return {
+            registered: true,
             staffInfo: response.staffInfo,
-            staff_code: response.staffInfo.staff_code
+            staff_code: response.staffInfo.staff_code,
+            token: token
           }
         } else {
           return { registered: false, message: response.message || 'ยังไม่ได้เชื่อมโยง' }
         }
       }
-      
+
       return { registered: false }
     } catch (error) {
       console.error('❌ เกิดข้อผิดพลาดในการตรวจสอบการเชื่อมโยง LINE:', error)
