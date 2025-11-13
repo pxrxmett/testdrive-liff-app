@@ -189,11 +189,12 @@
 <script>
 import BottomNav from '~/components/common/BottomNav.vue'
 import { formatDate as formatDateUtil, formatTime as formatTimeUtil } from '~/utils/dateFormatter'
+import { getTestDrives, updateTestDrive } from '~/utils/brandApi'
 
 export default {
   name: 'IndexPage',
   layout: 'default',
-  
+
   components: {
     BottomNav
   },
@@ -467,12 +468,10 @@ export default {
 
         console.log('กำลังส่งคำขอ API ด้วย ID พนักงาน:', this.staffInfo.id)
         console.log('Staff Code:', this.staffInfo.staff_code)
-        
-        // เรียก API เพื่อดึงข้อมูลคิวทั้งหมด (ไม่ส่ง parameters เพราะ API ยังไม่รองรับ)
-        const response = await this.$axios.$get('/test-drives', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
+
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+        const response = await getTestDrives(this.$axios)
+
         console.log('ข้อมูลคิวที่ได้รับ (ทั้งหมด):', response)
         
         // Debug: ดูโครงสร้างข้อมูลจริง
@@ -689,14 +688,15 @@ export default {
     
     async confirmStatusUpdate(newStatus) {
       if (!this.selectedQueue) return
-      
+
       try {
         this.loading = true
-        
-        await this.$axios.$patch(`/test-drives/${this.selectedQueue.id}`, {
+
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+        await updateTestDrive(this.$axios, this.selectedQueue.id, {
           status: newStatus
         })
-        
+
         this.selectedQueue.status = newStatus
         
         const queueIndex = this.queueData.findIndex(q => q.id === this.selectedQueue.id)

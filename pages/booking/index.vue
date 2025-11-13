@@ -293,6 +293,7 @@
 <script>
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
+import { getAvailableVehicles, createTestDrive } from '~/utils/brandApi'
 
 export default {
   name: "BookingPage",
@@ -531,13 +532,11 @@ export default {
     
     async fetchCarModels() {
       try {
-        // ดึงข้อมูลรุ่นรถจาก API
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
         if (this.$axios) {
-          const response = await this.$axios.$get('/stock/vehicles', {
-            params: { status: 'available' }
-          });
-          
-          console.log('API Response from /stock/vehicles:', response);
+          const response = await getAvailableVehicles(this.$axios, { status: 'available' });
+
+          console.log('API Response from getAvailableVehicles:', response);
           
           if (Array.isArray(response)) {
             // ตรวจสอบโครงสร้างของข้อมูลที่ได้รับ
@@ -835,16 +834,12 @@ export default {
         // แสดงข้อมูลที่จะส่งไป API
         console.log('Sending booking data:', JSON.stringify(bookingData, null, 2));
         
-        // ส่งข้อมูลไปยัง API
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
         if (this.$axios) {
           try {
-            const response = await this.$axios.$post('/test-drives', bookingData, {
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            console.log('API Response from test-drives:', response);
+            const response = await createTestDrive(this.$axios, bookingData);
+
+            console.log('API Response from createTestDrive:', response);
             
             // แสดงข้อความสำเร็จและนำทางไปหน้าถัดไป
             this.handleBookingSuccess(response);
@@ -902,16 +897,12 @@ export default {
        // แสดงข้อมูลที่จะส่งไป API
        console.log('Sending booking data:', JSON.stringify(bookingData, null, 2));
        
-       // ส่งข้อมูลไปยัง API
+       // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
        if (this.$axios) {
          try {
-           const response = await this.$axios.$post('/test-drives', bookingData, {
-             headers: {
-               'Content-Type': 'application/json'
-             }
-           });
-           
-           console.log('API Response from test-drives:', response);
+           const response = await createTestDrive(this.$axios, bookingData);
+
+           console.log('API Response from createTestDrive:', response);
            
            // แสดงข้อความสำเร็จและนำทางไปหน้าถัดไป
            this.handleBookingSuccess(response);

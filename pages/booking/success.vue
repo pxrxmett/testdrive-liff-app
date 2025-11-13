@@ -107,6 +107,8 @@
 </template>
 
 <script>
+import { getTestDriveById, getAvailableVehicles } from '~/utils/brandApi'
+
 export default {
   name: 'BookingSuccessPage',
   layout: 'default',
@@ -165,7 +167,8 @@ export default {
     async fetchBookingDetails() {
       try {
         if (this.$axios && this.bookingId) {
-          const response = await this.$axios.$get(`/test-drives/${this.bookingId}`);
+          // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+          const response = await getTestDriveById(this.$axios, this.bookingId);
           this.bookingData = response;
           
           // ดึงข้อมูลรุ่นรถเพิ่มเติม
@@ -194,13 +197,11 @@ export default {
 
     async fetchCarModels() {
       try {
-        // ดึงข้อมูลรุ่นรถจาก API
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
         if (this.$axios) {
-          const response = await this.$axios.$get('/stock/vehicles', {
-            params: { status: 'available' }
-          });
-          
-          console.log('API Response from /stock/vehicles:', response);
+          const response = await getAvailableVehicles(this.$axios, { status: 'available' });
+
+          console.log('API Response from getAvailableVehicles:', response);
           
           if (Array.isArray(response) && response.length > 0) {
             // แมปข้อมูลรถให้ถูกต้อง

@@ -156,6 +156,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/th'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
+import { getTestDrives } from '~/utils/brandApi'
 
 // เพิ่ม plugins
 dayjs.extend(utc)
@@ -576,21 +577,17 @@ export default {
     async fetchBookings() {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        // เรียกใช้ API ตาม documentation
-        const response = await this.$axios.get('/test-drives');
-        
-        if (response.data && Array.isArray(response.data)) {
-          this.bookings = this.formatBookingData(response.data);
-          console.log('โหลดข้อมูลการจองเรียบร้อย:', this.bookings.length, 'รายการ');
-        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          // ในกรณีที่ API ส่งข้อมูลมาแบบ wrapped ใน data property
-          this.bookings = this.formatBookingData(response.data.data);
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+        const response = await getTestDrives(this.$axios);
+
+        if (response && Array.isArray(response)) {
+          this.bookings = this.formatBookingData(response);
           console.log('โหลดข้อมูลการจองเรียบร้อย:', this.bookings.length, 'รายการ');
         } else {
           // ถ้าไม่มีข้อมูลหรือข้อมูลไม่ใช่ array
-          console.log('ไม่มีข้อมูลการจองหรือข้อมูลไม่ถูกต้อง:', response.data);
+          console.log('ไม่มีข้อมูลการจองหรือข้อมูลไม่ถูกต้อง:', response);
           this.bookings = [];
         }
         
