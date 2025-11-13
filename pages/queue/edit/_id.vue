@@ -194,6 +194,8 @@
 </template>
 
 <script>
+import { getTestDrive, getTestDrives, updateTestDrive, getVehicles, updateVehicleStatus, getStaff } from '~/utils/brandApi'
+
 export default {
   name: 'EditBookingPage',
   
@@ -234,7 +236,7 @@ export default {
         const userInfo = this.$store.state.auth?.user;
         
         if (!userInfo) {
-          const response = await this.$axios.$get('/staffs/' + this.$store.state.auth.userId);
+          const response = await getStaff(this.$axios, this.$store.state.auth.userId);
           this.userInfo = {
             name: response.name || `${response.first_name || ''} ${response.last_name || ''}`.trim(),
             branch: response.department || 'สาขาหลัก'
@@ -255,23 +257,10 @@ export default {
       try {
         console.log('กำลังดึงข้อมูลรถทั้งหมด...');
         
-        // ลอง API endpoint ที่ 1: /stock
-        let response;
-        try {
-          console.log('Trying /stock...');
-          response = await this.$axios.$get('/stock');
-          console.log('Response from /stock:', response);
-        } catch (err1) {
-          console.log('Failed /stock, trying /stock/vehicles...');
-          // ลอง API endpoint ที่ 2: /stock/vehicles
-          try {
-            response = await this.$axios.$get('/stock/vehicles');
-            console.log('Response from /stock/vehicles:', response);
-          } catch (err2) {
-            console.error('Both API endpoints failed:', { err1: err1.message, err2: err2.message });
-            throw err2;
-          }
-        }
+        // Use brand-scoped API to get vehicles
+        console.log('Fetching vehicles from brand-scoped API...');
+        const response = await getVehicles(this.$axios);
+        console.log('Response from brand-scoped vehicles API:', response);
         
         console.log('Final response:', response);
         console.log('Response type:', typeof response);
@@ -402,7 +391,7 @@ export default {
       
       try {
         const bookingId = this.$route.params.id;
-        const response = await this.$axios.$get(`/test-drives/${bookingId}`);
+        const response = await getTestDrive(this.$axios, bookingId);
         
         console.log('ข้อมูลการจองจาก API:', response);
         
@@ -496,10 +485,8 @@ export default {
       try {
         console.log('กำลังตรวจสอบรถที่ว่างในวันที่:', this.bookingData.date);
         
-        const response = await this.$axios.$get('/test-drives', {
-          params: {
-            date: this.bookingData.date
-          }
+        const response = await getTestDrives(this.$axios, {
+          date: this.bookingData.date
         });
         
         console.log('รายการจองในวันที่เลือก:', response);
@@ -646,7 +633,7 @@ export default {
 
         console.log('บันทึกข้อมูลก่อนส่งให้ลูกค้าเซ็น:', apiUpdateData);
 
-        await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
+        await updateTestDrive(this.$axios, bookingId, apiUpdateData);
 
         // Redirect to signature page
         this.$router.push(`/queue/signature/${bookingId}`);
@@ -699,8 +686,8 @@ export default {
         
         console.log('ข้อมูลที่จะส่งไปอัพเดต:', apiUpdateData);
         
-        const response = await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
-        
+        const response = await updateTestDrive(this.$axios, bookingId, apiUpdateData);
+
         console.log('ผลการอัพเดตข้อมูล:', response);
         
         // อัพเดตสถานะรถ
@@ -735,9 +722,7 @@ export default {
           vehicleStatus = 'available';
         }
         
-        await this.$axios.$patch(`/stock/vehicles/${this.bookingData.vehicleId}/status`, {
-          status: vehicleStatus
-        });
+        await updateVehicleStatus(this.$axios, this.bookingData.vehicleId, vehicleStatus);
         
         console.log(`อัพเดตสถานะรถ ${this.bookingData.vehicleId} เป็น ${vehicleStatus}`);
         

@@ -293,6 +293,7 @@
 <script>
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
+import { getVehicles, createTestDrive } from '~/utils/brandApi'
 
 export default {
   name: "BookingPage",
@@ -533,11 +534,9 @@ export default {
       try {
         // ดึงข้อมูลรุ่นรถจาก API
         if (this.$axios) {
-          const response = await this.$axios.$get('/stock/vehicles', {
-            params: { status: 'available' }
-          });
-          
-          console.log('API Response from /stock/vehicles:', response);
+          const response = await getVehicles(this.$axios, { status: 'available' });
+
+          console.log('API Response from brand-scoped vehicles API:', response);
           
           if (Array.isArray(response)) {
             // ตรวจสอบโครงสร้างของข้อมูลที่ได้รับ
@@ -838,13 +837,9 @@ export default {
         // ส่งข้อมูลไปยัง API
         if (this.$axios) {
           try {
-            const response = await this.$axios.$post('/test-drives', bookingData, {
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            console.log('API Response from test-drives:', response);
+            const response = await createTestDrive(this.$axios, bookingData);
+
+            console.log('API Response from brand-scoped test-drives:', response);
             
             // แสดงข้อความสำเร็จและนำทางไปหน้าถัดไป
             this.handleBookingSuccess(response);
@@ -905,13 +900,9 @@ export default {
        // ส่งข้อมูลไปยัง API
        if (this.$axios) {
          try {
-           const response = await this.$axios.$post('/test-drives', bookingData, {
-             headers: {
-               'Content-Type': 'application/json'
-             }
-           });
-           
-           console.log('API Response from test-drives:', response);
+           const response = await createTestDrive(this.$axios, bookingData);
+
+           console.log('API Response from brand-scoped test-drives:', response);
            
            // แสดงข้อความสำเร็จและนำทางไปหน้าถัดไป
            this.handleBookingSuccess(response);

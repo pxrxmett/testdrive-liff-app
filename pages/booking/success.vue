@@ -107,6 +107,8 @@
 </template>
 
 <script>
+import { getTestDrive, getVehicles } from '~/utils/brandApi'
+
 export default {
   name: 'BookingSuccessPage',
   layout: 'default',
@@ -165,7 +167,7 @@ export default {
     async fetchBookingDetails() {
       try {
         if (this.$axios && this.bookingId) {
-          const response = await this.$axios.$get(`/test-drives/${this.bookingId}`);
+          const response = await getTestDrive(this.$axios, this.bookingId);
           this.bookingData = response;
           
           // ดึงข้อมูลรุ่นรถเพิ่มเติม
@@ -196,9 +198,7 @@ export default {
       try {
         // ดึงข้อมูลรุ่นรถจาก API
         if (this.$axios) {
-          const response = await this.$axios.$get('/stock/vehicles', {
-            params: { status: 'available' }
-          });
+          const response = await getVehicles(this.$axios, { status: 'available' });
           
           console.log('API Response from /stock/vehicles:', response);
           

@@ -1,4 +1,12 @@
 // store/testDrive.js
+import {
+  getTestDrive,
+  getTestDrives,
+  updateTestDrive,
+  submitPdpaConsent as apiSubmitPdpaConsent,
+  submitSignature as apiSubmitSignature
+} from '~/utils/brandApi'
+
 export const state = () => ({
   currentBooking: null,
   bookings: [],
@@ -109,7 +117,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$get(`/test-drives/${bookingId}`)
+      const response = await getTestDrive(this.$axios, bookingId)
 
       commit('SET_CURRENT_BOOKING', response)
       return response
@@ -130,7 +138,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$get('/test-drives', { params })
+      const response = await getTestDrives(this.$axios, params)
 
       const bookings = Array.isArray(response) ? response : (response.data || [])
       commit('SET_BOOKINGS', bookings)
@@ -153,7 +161,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$patch(`/test-drives/${id}`, data)
+      const response = await updateTestDrive(this.$axios, id, data)
 
       commit('UPDATE_BOOKING', response)
       return response
@@ -174,9 +182,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      await this.$axios.$post(`/test-drives/${bookingId}/pdpa-consent`, {
-        consent
-      })
+      await apiSubmitPdpaConsent(this.$axios, bookingId, consent)
 
       commit('SET_PDPA_CONSENT', { id: bookingId, consent })
 
@@ -198,9 +204,7 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      await this.$axios.$post(`/test-drives/${bookingId}/signature`, {
-        signatureData
-      })
+      await apiSubmitSignature(this.$axios, bookingId, signatureData)
 
       commit('SET_SIGNATURE', { id: bookingId, signatureData })
 

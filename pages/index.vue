@@ -187,6 +187,7 @@
 </template>
 
 <script>
+import { getTestDrive, updateTestDrive, getVehicle, getStaff, updateVehicleStatus } from '~/utils/brandApi'
 import BottomNav from '~/components/common/BottomNav.vue'
 import { formatDate as formatDateUtil, formatTime as formatTimeUtil } from '~/utils/dateFormatter'
 
