@@ -157,18 +157,15 @@ export const actions = {
         // Try to re-authenticate using LINE if still logged in
         if (window.liff && window.liff.isLoggedIn()) {
           try {
-            const lineAccessToken = await window.liff.getAccessToken()
             const lineProfile = state.lineProfile || JSON.parse(localStorage.getItem('lineProfile') || '{}')
 
-            if (lineAccessToken && lineProfile.userId) {
-              console.log('🔄 Re-authenticating with LINE token...')
+            if (lineProfile.userId) {
+              console.log('🔄 Re-authenticating with checkLineRegistration...')
 
-              const loginResult = await dispatch('loginWithLine', {
-                lineProfile,
-                lineAccessToken
-              })
+              // ✅ ใช้ checkLineRegistration แทน loginWithLine
+              const checkResult = await dispatch('checkLineRegistration')
 
-              if (loginResult.success) {
+              if (checkResult.registered && checkResult.token) {
                 console.log('✅ Re-authentication successful')
                 return true
               }
@@ -477,106 +474,31 @@ export const actions = {
     }
   },
 
+  // ❌ DEPRECATED: ใช้ checkLineRegistration แทน ซึ่งจะคืน token มาเลย
+  // เก็บไว้สำหรับ backward compatibility หรืออาจจะลบในอนาคต
+  /*
   async loginWithLine({ commit, dispatch }, { lineProfile, lineAccessToken }) {
-    console.log('กำลังล็อกอินด้วย LINE')
-    
-    if (!lineProfile || !lineProfile.userId) {
-      return { 
-        success: false, 
-        error: 'ข้อมูล LINE Profile ไม่ถูกต้อง'
-      }
-    }
-    
-    const accessToken = lineAccessToken || lineProfile.accessToken
-    
-    if (!accessToken) {
+    console.log('⚠️ DEPRECATED: loginWithLine() - ใช้ checkLineRegistration แทน')
+
+    // Redirect to checkLineRegistration
+    const checkResult = await dispatch('checkLineRegistration')
+
+    if (checkResult.registered && checkResult.token) {
       return {
-        success: false,
-        error: 'ไม่พบ LINE Access Token'
+        success: true,
+        token: checkResult.token,
+        user: checkResult.user,
+        staff_code: checkResult.staff_code
       }
     }
-    
-    commit('setLineProfile', lineProfile)
-    commit('setLineAccessToken', accessToken)
-    
-    try {
-      const checkResult = await dispatch('checkLineRegistration')
-      
-      if (!checkResult.registered) {
-        console.warn('ไม่พบการเชื่อมโยงบัญชี LINE กับพนักงาน')
-        return {
-          success: false,
-          error: checkResult.error || 'ไม่พบการเชื่อมโยงบัญชี LINE กับพนักงาน',
-          needRegistration: true
-        }
-      }
-      
-      console.log('กำลังเรียก API ล็อกอินด้วย LINE')
-      
-      const response = await this.$axios.$post('/auth/line-login', {
-        accessToken,
-        lineUserId: lineProfile.userId
-      })
 
-      const token = response.access_token || response.token
-
-      if (token) {
-        commit('setToken', token)
-        
-        if (response.user) {
-          commit('setUser', response.user)
-          localStorage.setItem('user', JSON.stringify(response.user))
-          
-          if (response.user.staff_code) {
-            commit('setStaffCode', response.user.staff_code)
-            localStorage.setItem('staffCode', response.user.staff_code)
-          }
-        }
-        
-        commit('setAuth', true)
-        commit('setLastCheck', Date.now())
-        
-        localStorage.setItem('token', token)
-        localStorage.setItem('lineProfile', JSON.stringify(lineProfile))
-        
-        return { 
-          success: true,
-          token,
-          user: response.user,
-          staff_code: response.user?.staff_code
-        }
-      }
-      
-      throw new Error('ไม่พบ token ในการตอบกลับจาก API')
-      
-    } catch (error) {
-      console.error('การล็อกอินผ่าน LINE ไม่สำเร็จ:', error)
-      
-      if (error.response) {
-        const { status, data } = error.response
-        
-        if (status === 401 || status === 404) {
-          return { 
-            success: false,
-            error: data?.message || 'ไม่พบการเชื่อมโยงบัญชี LINE กับพนักงาน',
-            needRegistration: true
-          }
-        }
-        
-        if (status === 400) {
-          return { 
-            success: false,
-            error: data?.message || data?.error || 'ข้อมูลไม่ถูกต้อง'
-          }
-        }
-      }
-      
-      return { 
-        success: false,
-        error: error.message || 'เกิดข้อผิดพลาดในการล็อกอิน'
-      }
+    return {
+      success: false,
+      error: 'ไม่พบการเชื่อมโยงบัญชี LINE กับพนักงาน',
+      needRegistration: true
     }
   },
+  */
 
   // ✅ ปรับปรุง fetchStaffData ให้ทำงานได้ดีขึ้น
   async fetchStaffDataById({ commit, state }, staffId) {

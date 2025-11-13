@@ -217,12 +217,11 @@ export default {
         if (result.registered) {
           console.log('✅ พบการเชื่อมโยงบัญชี!');
 
-          // ✅ ตรวจสอบว่ามี token หรือไม่
+          // ✅ checkLineRegistration จะคืน token มาแล้ว ไม่ต้องเรียก /auth/line-login อีก
           const token = result.token || this.$store.state.auth?.token || localStorage.getItem('token');
 
           if (token) {
             console.log('✅ มี token แล้ว - Redirect ไปหน้า Dashboard');
-            // มี token แล้ว ไม่ต้อง login อีก แค่ redirect
             setTimeout(() => {
               const redirectPath = localStorage.getItem('redirectAfterLogin');
               if (redirectPath && redirectPath !== '/login') {
@@ -233,9 +232,8 @@ export default {
               }
             }, 500);
           } else {
-            console.log('⏳ ยังไม่มี token - พยายามล็อกอิน...');
-            // ถ้ายังไม่มี token ให้ล็อกอินผ่าน /auth/line-login
-            await this.attemptSystemLogin();
+            console.error('❌ ไม่พบ token แม้ว่าจะเชื่อมโยงแล้ว - กรุณาติดต่อผู้ดูแลระบบ');
+            this.errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง';
           }
         } else {
           console.log('ยังไม่ได้เชื่อมโยงบัญชี - Redirect ไปหน้าเชื่อมโยง');
@@ -259,35 +257,6 @@ export default {
         this.errorMessage = error.response?.data?.message || error.message || 'เกิดข้อผิดพลาดในการตรวจสอบ';
       } finally {
         this.checkingConnection = false;
-      }
-    },
-
-    async attemptSystemLogin() {
-      try {
-        const accessToken = await window.liff.getAccessToken();
-        
-        const loginResult = await this.$store.dispatch('auth/loginWithLine', {
-          lineProfile: this.lineProfile,
-          lineAccessToken: accessToken
-        });
-
-        if (loginResult.success) {
-          console.log('ล็อกอินสำเร็จ!');
-          
-          // ตรวจสอบ redirect path
-          const redirectPath = localStorage.getItem('redirectAfterLogin');
-          if (redirectPath && redirectPath !== '/login') {
-            localStorage.removeItem('redirectAfterLogin');
-            this.$router.push(redirectPath);
-          } else {
-            this.$router.push('/');
-          }
-        } else {
-          this.errorMessage = loginResult.error || 'การล็อกอินไม่สำเร็จ';
-        }
-      } catch (error) {
-        console.error('เกิดข้อผิดพลาดในการล็อกอินระบบ:', error);
-        this.errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
       }
     },
 
