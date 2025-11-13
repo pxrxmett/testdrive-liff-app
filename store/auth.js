@@ -278,34 +278,47 @@ export const actions = {
           console.log('✅ User data saved:', response.user)
         }
 
+        // ✅ NEW: บันทึก brandCode อัตโนมัติถ้า Backend ส่งมา
+        const brandCode = response.brandCode || response.brand_code || response.brand
+        if (brandCode) {
+          localStorage.setItem('brandCode', brandCode)
+          console.log('✅ brandCode saved:', brandCode)
+        } else {
+          console.warn('⚠️ brandCode not found in response')
+        }
+
         if (isRegistered && response.staff) {
           commit('setStaffInfo', response.staff)
           localStorage.setItem('staffInfo', JSON.stringify(response.staff))
 
-          if (response.staff.staff_code) {
-            commit('setStaffCode', response.staff.staff_code)
-            localStorage.setItem('staffCode', response.staff.staff_code)
+          // ✅ รองรับทั้ง staff_code และ employeeCode
+          const staffCode = response.staff.staff_code || response.staff.employeeCode
+          if (staffCode) {
+            commit('setStaffCode', staffCode)
+            localStorage.setItem('staffCode', staffCode)
           }
 
           return {
             registered: true,
             staffInfo: response.staff,
-            staff_code: response.staff.staff_code,
+            staff_code: staffCode,
             token: token
           }
         } else if (isRegistered && response.staffInfo) {
           commit('setStaffInfo', response.staffInfo)
           localStorage.setItem('staffInfo', JSON.stringify(response.staffInfo))
 
-          if (response.staffInfo.staff_code) {
-            commit('setStaffCode', response.staffInfo.staff_code)
-            localStorage.setItem('staffCode', response.staffInfo.staff_code)
+          // ✅ รองรับทั้ง staff_code และ employeeCode
+          const staffCode = response.staffInfo.staff_code || response.staffInfo.employeeCode
+          if (staffCode) {
+            commit('setStaffCode', staffCode)
+            localStorage.setItem('staffCode', staffCode)
           }
 
           return {
             registered: true,
             staffInfo: response.staffInfo,
-            staff_code: response.staffInfo.staff_code,
+            staff_code: staffCode,
             token: token
           }
         } else {
