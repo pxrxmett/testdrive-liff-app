@@ -60,7 +60,7 @@ export const actions = {
   initAuth({ commit }) {
     console.log('กำลังตรวจสอบการล็อกอิน...')
     
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('access_token')
     const userStr = localStorage.getItem('user')
     const lineProfileStr = localStorage.getItem('lineProfile')
     const staffCode = localStorage.getItem('staffCode')
@@ -116,7 +116,7 @@ export const actions = {
 
   // ✅ IMPROVED: Enhanced token refresh with better error handling
   async refreshAuth({ commit, state, dispatch }) {
-    const token = state.token || localStorage.getItem('token')
+    const token = state.token || localStorage.getItem('access_token')
     if (!token) {
       console.log('⚠️ No token found, cannot refresh')
       return false
@@ -503,7 +503,7 @@ export const actions = {
         commit('setAuth', true)
         commit('setLastCheck', Date.now())
         
-        localStorage.setItem('token', token)
+        localStorage.setItem('access_token', token)
         localStorage.setItem('lineProfile', JSON.stringify(lineProfile))
         
         return { 
@@ -548,7 +548,7 @@ export const actions = {
   // ✅ ปรับปรุง fetchStaffData ให้ทำงานได้ดีขึ้น
   async fetchStaffDataById({ commit, state }, staffId) {
     try {
-      const token = state.token || localStorage.getItem('token')
+      const token = state.token || localStorage.getItem('access_token')
       if (!token) {
         return { success: false, error: 'ไม่พบ token' }
       }
@@ -589,7 +589,7 @@ export const actions = {
       }
     }
     
-    localStorage.removeItem('token')
+    localStorage.removeItem('access_token')
     localStorage.removeItem('user')
     localStorage.removeItem('staffCode')
     localStorage.removeItem('staffInfo')
