@@ -107,7 +107,9 @@ export default {
           if (token) {
             this.$store.commit('auth/setToken', token)
             this.$store.commit('auth/setAuth', true)
-            localStorage.setItem('token', token)
+            // ✅ CRITICAL: บันทึกเป็น 'access_token' ตาม store auth.js
+            localStorage.setItem('access_token', token)
+            localStorage.setItem('token', token) // Keep for backward compatibility
             console.log('✅ Token saved from link-simple:', token.substring(0, 20) + '...')
           }
 
