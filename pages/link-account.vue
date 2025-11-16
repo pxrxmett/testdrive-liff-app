@@ -92,28 +92,29 @@ export default {
           throw new Error('ไม่พบข้อมูล LINE ID')
         }
 
-        // ✅ ใช้ /link endpoint (ส่ง lineAccessToken ด้วย)
-        // Note: Backend production ยังไม่มี /link-simple endpoint
-        const response = await this.$axios.$post('/line-integration/link', {
+        // ✅ ใช้ /link-simple endpoint (ไม่ต้องส่ง lineAccessToken)
+        // Simple linking สำหรับ LIFF App ที่มี LINE userId อยู่แล้ว
+        const response = await this.$axios.$post('/line-integration/link-simple', {
           lineUserId: this.lineProfile.userId,
           staffCode: this.staffId,
-          lineAccessToken: this.lineProfile.accessToken
+          lineDisplayName: this.lineProfile.displayName,
+          linePictureUrl: this.lineProfile.pictureUrl
         })
 
         if (response.success) {
-          // ✅ บันทึก token ที่ได้จาก response
-          if (response.token) {
-            this.$store.commit('auth/setToken', response.token)
+          // ✅ บันทึก access_token ที่ได้จาก link-simple response
+          const token = response.access_token || response.token
+          if (token) {
+            this.$store.commit('auth/setToken', token)
             this.$store.commit('auth/setAuth', true)
-            localStorage.setItem('token', response.token)
-            console.log('✅ Token saved from link-simple:', response.token.substring(0, 20) + '...')
+            localStorage.setItem('token', token)
+            console.log('✅ Token saved from link-simple:', token.substring(0, 20) + '...')
           }
 
-          // ✅ บันทึก brandCode ที่ได้จาก response
-          const brandCode = response.brandCode || response.brand_code || response.brand
-          if (brandCode) {
-            localStorage.setItem('brandCode', brandCode)
-            console.log('✅ brandCode saved from link-simple:', brandCode)
+          // ✅ บันทึก brandCode ที่ได้จาก staff object
+          if (response.staff && response.staff.brandCode) {
+            localStorage.setItem('brandCode', response.staff.brandCode)
+            console.log('✅ brandCode saved from link-simple:', response.staff.brandCode)
           }
 
           // ✅ บันทึกข้อมูล staff
