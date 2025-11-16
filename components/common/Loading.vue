@@ -74,7 +74,7 @@ export default {
 .body {
   width: 100%;
   height: 100%;
-  background: #00b900;
+  background: var(--brand-primary);
   border-radius: 10px;
   position: relative;
 }
@@ -83,7 +83,7 @@ export default {
   position: absolute;
   width: 15px;
   height: 15px;
-  background: #00b900;
+  background: var(--brand-primary);
   right: -5px;
   top: 5px;
   border-radius: 3px;
@@ -93,7 +93,7 @@ export default {
   position: absolute;
   width: 12px;
   height: 15px;
-  background: #00b900;
+  background: var(--brand-primary);
   left: -3px;
   top: 5px;
   border-radius: 3px;

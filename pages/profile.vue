@@ -409,7 +409,7 @@ export default {
 
 .loading-spinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #DA291C;
+  border-top: 4px solid var(--brand-primary);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -435,12 +435,12 @@ export default {
 
 .error-icon {
   font-size: 48px;
-  color: #DA291C;
+  color: var(--brand-primary);
   margin-bottom: 16px;
 }
 
 .error-message {
-  color: #DA291C;
+  color: var(--brand-primary);
   margin-bottom: 20px;
   font-size: 16px;
   line-height: 1.5;
@@ -448,7 +448,7 @@ export default {
 }
 
 .btn-retry {
-  background: #DA291C;
+  background: var(--brand-primary);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -459,10 +459,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  box-shadow: var(--brand-shadow);
 }
 
 .btn-retry:hover:not(:disabled) {
-  background: #B8241A;
+  opacity: 0.9;
+  box-shadow: var(--brand-shadow-hover);
 }
 
 .btn-retry:disabled {
@@ -480,7 +482,7 @@ export default {
 
 /* Profile Header */
 .profile-header {
-  background: linear-gradient(135deg, #DA291C, #B8241A);
+  background: var(--brand-primary);
   color: white;
   padding: 60px 20px 40px 20px;
   text-align: center;
@@ -557,10 +559,10 @@ export default {
 .section-title {
   font-size: 22px;
   font-weight: bold;
-  color: #333;
+  color: var(--brand-text);
   margin: 0 0 25px 0;
   padding-bottom: 10px;
-  border-bottom: 3px solid #DA291C;
+  border-bottom: 3px solid var(--brand-primary);
 }
 
 /* Profile Fields */
@@ -598,7 +600,7 @@ export default {
   border-radius: 25px;
   font-size: 13px;
   font-weight: 600;
-  background: #DA291C;
+  background: var(--brand-primary);
   color: white;
 }
 
@@ -613,9 +615,9 @@ export default {
   gap: 20px;
   margin-bottom: 25px;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--brand-bg);
   border-radius: 12px;
-  border: 2px solid #DA291C;
+  border: 2px solid var(--brand-primary);
 }
 
 .line-profile-image {
@@ -694,13 +696,15 @@ export default {
 }
 
 .btn-refresh {
-  background: linear-gradient(135deg, #DA291C, #B8241A);
+  background: var(--brand-primary);
   color: white;
+  box-shadow: var(--brand-shadow);
 }
 
 .btn-refresh:hover:not(:disabled) {
-  background: linear-gradient(135deg, #B8241A, #A01E16);
+  opacity: 0.9;
   transform: translateY(-2px);
+  box-shadow: var(--brand-shadow-hover);
 }
 
 .btn-refresh:disabled {

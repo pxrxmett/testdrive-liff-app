@@ -1,0 +1,183 @@
+/* assets/css/themes.css - Multi-Brand Theme Styles */
+
+/* ========================================
+   CSS Variables (Applied via JS)
+   ======================================== */
+:root {
+  --brand-primary: #E60012;
+  --brand-primary-rgb: 230, 0, 18;
+  --brand-secondary: #1A1A1A;
+  --brand-bg: #F5F5F5;
+  --brand-bg-secondary: #FFFFFF;
+  --brand-text: #1A1A1A;
+  --brand-text-light: #666666;
+  --brand-shadow: 0 2px 8px rgba(230, 0, 18, 0.15);
+  --brand-shadow-hover: 0 4px 12px rgba(230, 0, 18, 0.25);
+}
+
+/* ========================================
+   ISUZU Theme
+   ======================================== */
+.theme-ISUZU {
+  --brand-primary: #E60012;
+  --brand-primary-rgb: 230, 0, 18;
+  --brand-secondary: #1A1A1A;
+  --brand-bg: #F5F5F5;
+  --brand-bg-secondary: #FFFFFF;
+  --brand-text: #1A1A1A;
+  --brand-text-light: #666666;
+  --brand-shadow: 0 2px 8px rgba(230, 0, 18, 0.15);
+  --brand-shadow-hover: 0 4px 12px rgba(230, 0, 18, 0.25);
+}
+
+/* ========================================
+   BYD Theme
+   ======================================== */
+.theme-BYD {
+  --brand-primary: #E60009;
+  --brand-primary-rgb: 230, 0, 9;
+  --brand-secondary: #000000;
+  --brand-bg: #FFFFFF;
+  --brand-bg-secondary: #F2F2F2;
+  --brand-text: #333333;
+  --brand-text-light: #666666;
+  --brand-shadow: 0 2px 8px rgba(230, 0, 9, 0.15);
+  --brand-shadow-hover: 0 4px 12px rgba(230, 0, 9, 0.25);
+}
+
+/* ========================================
+   Common Theme Utilities
+   ======================================== */
+
+/* Background */
+.bg-theme {
+  background-color: var(--brand-bg);
+}
+
+.bg-theme-secondary {
+  background-color: var(--brand-bg-secondary);
+}
+
+/* Text */
+.text-primary {
+  color: var(--brand-primary);
+}
+
+.text-theme {
+  color: var(--brand-text);
+}
+
+.text-theme-light {
+  color: var(--brand-text-light);
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--brand-shadow);
+}
+
+.btn-primary:hover {
+  box-shadow: var(--brand-shadow-hover);
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--brand-primary);
+  border: 2px solid var(--brand-primary);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+/* Cards */
+.card {
+  background-color: var(--brand-bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--brand-shadow);
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: var(--brand-shadow-hover);
+}
+
+/* Links */
+a.link-primary {
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+a.link-primary:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+.badge-secondary {
+  background-color: var(--brand-bg-secondary);
+  color: var(--brand-text);
+  border: 1px solid var(--brand-text-light);
+}
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 1.5rem 0;
+}
+
+/* Shadows */
+.shadow {
+  box-shadow: var(--brand-shadow);
+}
+
+.shadow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-hover:hover {
+  box-shadow: var(--brand-shadow-hover);
+}

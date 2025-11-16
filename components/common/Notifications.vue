@@ -40,30 +40,35 @@ export default {
 .notification {
   padding: 15px 20px;
   margin-bottom: 10px;
-  border-radius: 4px;
+  border-radius: 8px;
   background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--brand-shadow);
   cursor: pointer;
   min-width: 280px;
+  transition: transform 0.2s;
+}
+
+.notification:hover {
+  transform: translateX(-5px);
 }
 
 .notification.success {
-  background-color: #4caf50;
+  background-color: #10B981;
   color: white;
 }
 
 .notification.error {
-  background-color: #f44336;
+  background-color: var(--brand-primary);
   color: white;
 }
 
 .notification.warning {
-  background-color: #ff9800;
+  background-color: #F59E0B;
   color: white;
 }
 
 .notification.info {
-  background-color: #2196f3;
+  background-color: #3B82F6;
   color: white;
 }
 

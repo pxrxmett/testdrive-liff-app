@@ -799,8 +799,8 @@ export default {
 }
 
 .view-btn.active {
-  background: #FEF2F2;
-  color: #DA291C;
+  background: rgba(var(--brand-primary-rgb, 230, 0, 18), 0.1);
+  color: var(--brand-primary);
 }
 
 /* Month Navigator */
@@ -863,9 +863,9 @@ export default {
 .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(218, 41, 28, 0.2);
+  border: 3px solid rgba(var(--brand-primary-rgb, 230, 0, 18), 0.2);
   border-radius: 50%;
-  border-top-color: #DA291C;
+  border-top-color: var(--brand-primary);
   animation: spin 1s linear infinite;
   margin-bottom: 8px;
 }
@@ -896,16 +896,17 @@ export default {
 .retry-btn {
   margin-top: 12px;
   padding: 8px 16px;
-  background: #DC2626;
+  background: var(--brand-primary);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  transition: opacity 0.2s;
 }
 
 .retry-btn:hover {
-  background: #B91C1C;
+  opacity: 0.9;
 }
 
 /* Status Legend */
@@ -1088,12 +1089,12 @@ export default {
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: #DA291C;
+  background: var(--brand-primary);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--brand-shadow);
   border: none;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;

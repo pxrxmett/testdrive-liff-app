@@ -40,7 +40,7 @@ export default {
 <style scoped>
 .nav {
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--brand-bg-secondary);
   border-color: #e5e7eb;
   border-top-style: solid;
   border-top-width: 1px;
@@ -55,6 +55,7 @@ export default {
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .button {
@@ -69,12 +70,18 @@ export default {
   position: relative;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.button:active {
+  transform: scale(0.95);
 }
 
 .SVG {
   height: 24px;
   position: relative;
   width: 24px;
+  transition: filter 0.2s;
 }
 
 .container {
@@ -98,26 +105,25 @@ export default {
   text-align: center;
   white-space: nowrap;
   width: fit-content;
+  transition: color 0.2s;
 }
 
+/* ✅ Use CSS variables for active state - adapts to brand theme */
 .button.active .SVG {
-  content: url("https://api.iconify.design/mdi:home.svg?color=%23dc2626");
-}
-
-.button.active:nth-child(2) .SVG {
-  content: url("https://api.iconify.design/mdi:calendar.svg?color=%23dc2626");
-}
-
-.button.active:nth-child(3) .SVG {
-  content: url("https://api.iconify.design/mdi:car.svg?color=%23dc2626");
-}
-
-.button.active:nth-child(4) .SVG {
-  content: url("https://api.iconify.design/mdi:account.svg?color=%23dc2626");
+  filter: brightness(0) saturate(100%) invert(18%) sepia(92%) saturate(7497%) hue-rotate(355deg) brightness(95%) contrast(107%);
 }
 
 .text-wrapper.active {
-  color: #dc2626;
+  color: var(--brand-primary);
   font-weight: 500;
+}
+
+/* Theme-specific icon colors for better visual consistency */
+.theme-ISUZU .button.active .SVG {
+  filter: brightness(0) saturate(100%) invert(11%) sepia(97%) saturate(6920%) hue-rotate(357deg) brightness(91%) contrast(115%);
+}
+
+.theme-BYD .button.active .SVG {
+  filter: brightness(0) saturate(100%) invert(10%) sepia(100%) saturate(7443%) hue-rotate(358deg) brightness(94%) contrast(114%);
 }
 </style>
