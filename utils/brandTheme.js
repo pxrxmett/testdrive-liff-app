@@ -11,6 +11,7 @@ export const brandThemes = {
 
     // Colors
     primary: '#E60012',
+    primaryRgb: '230, 0, 18',
     secondary: '#1A1A1A',
     background: '#F5F5F5',
     backgroundSecondary: '#FFFFFF',
@@ -19,6 +20,7 @@ export const brandThemes = {
 
     // Branding
     logo: '/images/isuzu-logo.png',
+    logoFallback: '/images/logo-placeholder.svg',
     logoAlt: 'ISUZU Logo',
 
     // Shadows & Effects
@@ -32,6 +34,7 @@ export const brandThemes = {
 
     // Colors
     primary: '#E60009',
+    primaryRgb: '230, 0, 9',
     secondary: '#000000',
     background: '#FFFFFF',
     backgroundSecondary: '#F2F2F2',
@@ -40,6 +43,7 @@ export const brandThemes = {
 
     // Branding
     logo: '/images/byd-logo.png',
+    logoFallback: '/images/logo-placeholder.svg',
     logoAlt: 'BYD Logo',
 
     // Shadows & Effects
@@ -97,6 +101,7 @@ export function applyTheme(brandCode) {
 
   // Apply CSS variables
   root.style.setProperty('--brand-primary', theme.primary)
+  root.style.setProperty('--brand-primary-rgb', theme.primaryRgb)
   root.style.setProperty('--brand-secondary', theme.secondary)
   root.style.setProperty('--brand-bg', theme.background)
   root.style.setProperty('--brand-bg-secondary', theme.backgroundSecondary)

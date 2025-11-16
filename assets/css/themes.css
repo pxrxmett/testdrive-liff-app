@@ -5,6 +5,7 @@
    ======================================== */
 :root {
   --brand-primary: #E60012;
+  --brand-primary-rgb: 230, 0, 18;
   --brand-secondary: #1A1A1A;
   --brand-bg: #F5F5F5;
   --brand-bg-secondary: #FFFFFF;
@@ -19,11 +20,14 @@
    ======================================== */
 .theme-ISUZU {
   --brand-primary: #E60012;
+  --brand-primary-rgb: 230, 0, 18;
   --brand-secondary: #1A1A1A;
   --brand-bg: #F5F5F5;
   --brand-bg-secondary: #FFFFFF;
   --brand-text: #1A1A1A;
   --brand-text-light: #666666;
+  --brand-shadow: 0 2px 8px rgba(230, 0, 18, 0.15);
+  --brand-shadow-hover: 0 4px 12px rgba(230, 0, 18, 0.25);
 }
 
 /* ========================================
@@ -31,11 +35,14 @@
    ======================================== */
 .theme-BYD {
   --brand-primary: #E60009;
+  --brand-primary-rgb: 230, 0, 9;
   --brand-secondary: #000000;
   --brand-bg: #FFFFFF;
   --brand-bg-secondary: #F2F2F2;
   --brand-text: #333333;
   --brand-text-light: #666666;
+  --brand-shadow: 0 2px 8px rgba(230, 0, 9, 0.15);
+  --brand-shadow-hover: 0 4px 12px rgba(230, 0, 9, 0.25);
 }
 
 /* ========================================
