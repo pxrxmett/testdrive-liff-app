@@ -30,13 +30,31 @@ export default async function({ store, $config, route }, inject) {
       log('🔑 LIFF ID:', liffId);
     }
 
-    // Initialize LIFF SDK
-    await liff.init({
-      liffId,
-      withLoginOnExternalBrowser: true
-    });
+    // Initialize LIFF SDK with error handling
+    try {
+      await liff.init({
+        liffId,
+        withLoginOnExternalBrowser: true
+      });
 
-    log('✅ LIFF initialized successfully');
+      log('✅ LIFF initialized successfully');
+    } catch (initError) {
+      // Handle specific LIFF initialization errors
+      if (initError.code === 'INVALID_ARGUMENT' ||
+          initError.message?.includes('authorization code')) {
+        console.warn('⚠️ Authorization code error - clearing URL and retrying...');
+
+        // Clear the URL parameters and reload
+        if (window.location.search.includes('liff.state')) {
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+          window.location.reload();
+          return;
+        }
+      }
+
+      throw initError; // Re-throw other errors
+    }
 
     // Inject LIFF to make it accessible globally
     inject('liff', liff);
@@ -98,6 +116,22 @@ export default async function({ store, $config, route }, inject) {
         code: error.code,
         stack: error.stack
       });
+    }
+
+    // Handle specific error cases
+    if (error.message?.includes('authorization code') ||
+        error.message?.includes('400')) {
+      console.warn('🔄 Authorization code expired - user will need to login again');
+
+      // Clear potentially stale LIFF state
+      if (process.client) {
+        try {
+          localStorage.removeItem('lineProfile');
+          localStorage.removeItem('lineAccessToken');
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+      }
     }
 
     // Don't block app execution even if LIFF fails

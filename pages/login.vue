@@ -117,6 +117,14 @@ export default {
       this.errorMessage = decodeURIComponent(this.$route.query.error);
     }
 
+    // Clear LIFF state parameters if present (to avoid authorization code errors)
+    if (window.location.search.includes('liff.state') ||
+        window.location.search.includes('code=')) {
+      console.log('🧹 Clearing LIFF state from URL...');
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
     // เริ่มต้น LIFF และตรวจสอบสถานะ
     await this.initializeLiff();
   },
@@ -125,28 +133,51 @@ export default {
     async initializeLiff() {
       try {
         console.log('เริ่มต้น LIFF ในหน้า login...');
-        
+
         // รอให้ LIFF พร้อม
         if (window.liff) {
-          await window.liff.ready;
-          this.liffReady = true;
-          
-          // ตรวจสอบสถานะการล็อกอิน
-          this.isLoggedIn = window.liff.isLoggedIn();
-          
-          if (this.isLoggedIn) {
-            await this.loadLineProfile();
-            await this.checkConnection();
+          try {
+            await window.liff.ready;
+            this.liffReady = true;
+
+            // ตรวจสอบสถานะการล็อกอิน
+            this.isLoggedIn = window.liff.isLoggedIn();
+
+            if (this.isLoggedIn) {
+              await this.loadLineProfile();
+              await this.checkConnection();
+            }
+
+            console.log('LIFF พร้อมใช้งาน, สถานะการล็อกอิน:', this.isLoggedIn);
+          } catch (liffReadyError) {
+            // Handle LIFF ready errors (like authorization code errors)
+            if (liffReadyError.message?.includes('authorization code') ||
+                liffReadyError.message?.includes('400')) {
+              console.warn('⚠️ LIFF authorization error - will prompt re-login');
+              this.errorMessage = 'รหัสยืนยันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง';
+              this.liffReady = true; // Allow user to try login again
+              this.isLoggedIn = false;
+            } else {
+              throw liffReadyError;
+            }
           }
-          
-          console.log('LIFF พร้อมใช้งาน, สถานะการล็อกอิน:', this.isLoggedIn);
         } else {
           // ถ้ายังไม่มี LIFF ให้รอสักครู่
           setTimeout(() => this.initializeLiff(), 1000);
         }
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการเริ่มต้น LIFF:', error);
-        this.errorMessage = 'ไม่สามารถเชื่อมต่อกับ LINE ได้ กรุณาลองใหม่';
+
+        // Provide user-friendly error messages
+        if (error.message?.includes('authorization code')) {
+          this.errorMessage = 'รหัสยืนยันหมดอายุ กรุณากดปุ่มด้านล่างเพื่อเข้าสู่ระบบใหม่';
+        } else if (error.message?.includes('LIFF_ID')) {
+          this.errorMessage = 'ไม่พบการตั้งค่า LINE LIFF กรุณาติดต่อผู้ดูแลระบบ';
+        } else {
+          this.errorMessage = 'ไม่สามารถเชื่อมต่อกับ LINE ได้ กรุณาลองใหม่';
+        }
+
+        this.liffReady = true; // Allow retry
       }
     },
 
