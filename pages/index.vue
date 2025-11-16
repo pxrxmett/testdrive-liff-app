@@ -376,7 +376,8 @@ export default {
       
       // ดึงข้อมูลพนักงาน
       try {
-        const staffResponse = await this.$axios.$get(`/staffs/${staffId}`, {
+        // ✅ FIX: Use correct endpoint - /line-integration/staff/{id} instead of /staffs/{id}
+        const staffResponse = await this.$axios.$get(`/line-integration/staff/${staffId}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         console.log('ข้อมูลพนักงานที่ได้รับ:', staffResponse)
