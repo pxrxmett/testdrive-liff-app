@@ -276,7 +276,7 @@ export const actions = {
         }
 
         // ✅ NEW: บันทึก brandCode อัตโนมัติถ้า Backend ส่งมา
-        const brandCode = response.brandCode || response.brand_code || response.brand
+        const brandCode = response.brandCode || response.brand_code || response.brand || response.user?.brandCode
         if (brandCode) {
           localStorage.setItem('brandCode', brandCode)
           console.log('✅ brandCode saved:', brandCode)
@@ -284,12 +284,14 @@ export const actions = {
           console.warn('⚠️ brandCode not found in response')
         }
 
-        if (isRegistered && response.staff) {
-          commit('setStaffInfo', response.staff)
-          localStorage.setItem('staffInfo', JSON.stringify(response.staff))
+        // ✅ CRITICAL FIX: รองรับทั้ง response.staff, response.staffInfo และ response.user
+        const staffData = response.staff || response.staffInfo || response.user
+        if (isRegistered && staffData) {
+          commit('setStaffInfo', staffData)
+          localStorage.setItem('staffInfo', JSON.stringify(staffData))
 
           // ✅ รองรับทั้ง staff_code และ employeeCode
-          const staffCode = response.staff.staff_code || response.staff.employeeCode
+          const staffCode = staffData.staff_code || staffData.employeeCode
           if (staffCode) {
             commit('setStaffCode', staffCode)
             localStorage.setItem('staffCode', staffCode)
@@ -297,24 +299,7 @@ export const actions = {
 
           return {
             registered: true,
-            staffInfo: response.staff,
-            staff_code: staffCode,
-            token: token
-          }
-        } else if (isRegistered && response.staffInfo) {
-          commit('setStaffInfo', response.staffInfo)
-          localStorage.setItem('staffInfo', JSON.stringify(response.staffInfo))
-
-          // ✅ รองรับทั้ง staff_code และ employeeCode
-          const staffCode = response.staffInfo.staff_code || response.staffInfo.employeeCode
-          if (staffCode) {
-            commit('setStaffCode', staffCode)
-            localStorage.setItem('staffCode', staffCode)
-          }
-
-          return {
-            registered: true,
-            staffInfo: response.staffInfo,
+            staffInfo: staffData,
             staff_code: staffCode,
             token: token
           }
