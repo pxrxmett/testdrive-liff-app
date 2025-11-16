@@ -138,9 +138,28 @@ export default {
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี:', error)
 
+        // ✅ จัดการกรณี 409 Conflict - เชื่อมโยงแล้ว
+        if (error.response && error.response.status === 409) {
+          console.log('⚠️ LINE เชื่อมโยงแล้ว - redirect ไปหน้าหลัก')
+
+          this.$store.dispatch('notifications/add', {
+            type: 'info',
+            message: 'LINE นี้เชื่อมโยงกับบัญชีแล้ว กำลัง redirect...'
+          })
+
+          // Re-check registration to get token
+          const checkResult = await this.$store.dispatch('auth/checkLineRegistration')
+          if (checkResult && checkResult.registered) {
+            setTimeout(() => {
+              this.$router.push('/')
+            }, 1500)
+            return
+          }
+        }
+
         this.$store.dispatch('notifications/add', {
           type: 'error',
-          message: error.message || 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่อีกครั้ง'
+          message: error.response?.data?.message || error.message || 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่อีกครั้ง'
         })
       } finally {
         this.loading = false
