@@ -92,10 +92,12 @@ export default {
           throw new Error('ไม่พบข้อมูล LINE ID')
         }
 
-        // ✅ เปลี่ยนเป็น /link-simple (ไม่ต้องส่ง lineAccessToken)
-        const response = await this.$axios.$post('/line-integration/link-simple', {
+        // ✅ ใช้ /link endpoint (ส่ง lineAccessToken ด้วย)
+        // Note: Backend production ยังไม่มี /link-simple endpoint
+        const response = await this.$axios.$post('/line-integration/link', {
           lineUserId: this.lineProfile.userId,
-          staffCode: this.staffId
+          staffCode: this.staffId,
+          lineAccessToken: this.lineProfile.accessToken
         })
 
         if (response.success) {

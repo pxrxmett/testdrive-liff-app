@@ -37,8 +37,7 @@ export default function ({ $axios, redirect, store }) {
         // 2. endpoints ที่เช็คการเชื่อมโยง LINE
         (config.url.includes('/line-integration/check') && config.method === 'post') ||
         config.url.includes('/line-integration/register') ||
-        config.url.includes('/line-integration/link') ||
-        config.url.includes('/line-integration/link-simple') ||
+        (config.url.includes('/line-integration/link') && config.method === 'post') ||
         // 3. endpoints สาธารณะอื่นๆ
         config.url.includes('/public/')
       ));
