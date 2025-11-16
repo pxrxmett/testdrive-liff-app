@@ -9,39 +9,11 @@ export default function ({ $axios, redirect, store }) {
   const warn = console.warn;
   const error = console.error;
   
-  // ตัวแปรสำหรับเก็บชื่อ token ที่ใช้
-  const TOKEN_KEY = 'token';
+  // ตัวแปรสำหรับเก็บชื่อ token ที่ใช้ (แก้ไขเป็น access_token)
+  const TOKEN_KEY = 'access_token';
   
-  // ตรวจสอบและตั้งค่า baseURL
-  if (process.client) {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    
-    // Production บน Railway
-    if (hostname.includes('railway.app')) {
-      // ใช้ API_URL จาก environment variables (มี /api อยู่แล้ว)
-      $axios.defaults.baseURL = process.env.API_URL || 'https://isuzu-liff.up.railway.app/api';
-      log('Railway Production, baseURL:', $axios.defaults.baseURL);
-    }
-    // Localtunnel
-    else if (hostname.includes('loca.lt') || hostname === 'testdrive-liff.loca.lt') {
-      $axios.defaults.baseURL = `${protocol}//${hostname}`;
-      log('Localtunnel detected, baseURL:', $axios.defaults.baseURL);
-    }
-    // Cloudflare Tunnel
-    else if (hostname.includes('trycloudflare.com')) {
-      $axios.defaults.baseURL = `${protocol}//${hostname}`;
-      log('Cloudflare Tunnel detected, baseURL:', $axios.defaults.baseURL);
-    }
-    // Local Development
-    else {
-      $axios.defaults.baseURL = process.env.BASE_URL || 'http://localhost:3000';
-      log('Local Development, baseURL:', $axios.defaults.baseURL);
-    }
-    
-    // แสดง baseURL ที่ใช้งานจริง
-    console.log('🔗 Axios baseURL:', $axios.defaults.baseURL);
-  }
+  // baseURL is configured in nuxt.config.js - no need to override here
+  console.log('🔗 Axios baseURL:', $axios.defaults.baseURL);
 
   // ลดเวลา timeout ลงเพื่อไม่ให้เว็บค้าง
   $axios.defaults.timeout = 15000; // 15 วินาที
@@ -66,6 +38,7 @@ export default function ({ $axios, redirect, store }) {
         (config.url.includes('/line-integration/check') && config.method === 'post') ||
         config.url.includes('/line-integration/register') ||
         config.url.includes('/line-integration/link') ||
+        config.url.includes('/line-integration/link-simple') ||
         // 3. endpoints สาธารณะอื่นๆ
         config.url.includes('/public/')
       ));
@@ -136,6 +109,7 @@ export default function ({ $axios, redirect, store }) {
                      responseData?.access_token ||
                      responseData?.accessToken;
 
+
     if (newToken && process.client) {
       try {
         // บันทึกทั้ง 'token' และ 'access_token' เพื่อความชัวร์
@@ -169,8 +143,9 @@ export default function ({ $axios, redirect, store }) {
     }
     
     // ตรวจสอบและบันทึกข้อมูลพนักงานถ้ามี
-    const staffInfo = response.data?.staffInfo;
-    const checkEndpoint = response.config.url?.includes('/line-integration/check');
+    const staffInfo = response.data?.staffInfo || response.data?.staff;
+    const checkEndpoint = response.config.url?.includes('/line-integration/check') ||
+                         response.config.url?.includes('/line-integration/link');
     
     if (staffInfo && checkEndpoint && process.client) {
       try {
@@ -227,6 +202,8 @@ export default function ({ $axios, redirect, store }) {
       if (process.client) {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem('user');
+        localStorage.removeItem('staffInfo');
+        localStorage.removeItem('staffCode');
         
         if (store?.dispatch) {
           store.dispatch('auth/logout');
@@ -248,3 +225,4 @@ export default function ({ $axios, redirect, store }) {
     return Promise.reject(error);
   });
 }
+
