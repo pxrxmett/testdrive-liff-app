@@ -210,17 +210,24 @@ export async function getCalendarEvents(axios, params = {}) {
 }
 
 /**
- * Cancel test drive
+ * Delete/Cancel test drive (ตาม API Documentation)
  * @param {object} axios - Axios instance from Nuxt
  * @param {number|string} testDriveId - Test drive ID
- * @param {object} cancelData - Cancellation reason, etc.
- * @returns {Promise<object>} Updated test drive
+ * @returns {Promise<object>} Deleted test drive response
  */
-export async function cancelTestDrive(axios, testDriveId, cancelData = {}) {
-  const path = buildBrandApiPath(`/test-drives/${testDriveId}/cancel`)
+export async function deleteTestDrive(axios, testDriveId) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}`)
 
-  console.log(`📞 POST ${path}`, cancelData)
+  console.log(`📞 DELETE ${path}`)
 
-  const response = await axios.$post(path, cancelData)
+  const response = await axios.$delete(path)
   return response
+}
+
+/**
+ * @deprecated Use deleteTestDrive instead (API uses DELETE method, not POST /cancel)
+ */
+export async function cancelTestDrive(axios, testDriveId) {
+  console.warn('⚠️ cancelTestDrive is deprecated. Use deleteTestDrive instead.')
+  return deleteTestDrive(axios, testDriveId)
 }

@@ -779,7 +779,7 @@ export default {
         test_route: "รอบโชว์รูม", // ตัวอย่างเส้นทาง
         distance: 0, // ค่าเริ่มต้น
         duration: 60, // หน่วยเป็นนาที
-        responsible_staff: 1 // กำหนดค่าตายตัวเป็น 1 ตามข้อความ error
+        responsible_staff: this.staffInfo.id // ✅ ใช้ ID พนักงานที่ login แทน hard-code
       };
       
       // เพิ่มข้อมูลเกี่ยวกับบัตรประชาชน/ใบขับขี่ (สำหรับ walkin)

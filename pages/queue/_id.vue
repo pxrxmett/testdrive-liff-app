@@ -167,6 +167,8 @@
 </template>
 
 <script>
+import { deleteTestDrive } from '~/utils/brandApi'
+
 export default {
   name: "QueueDetail",
   data() {
@@ -274,27 +276,33 @@ export default {
     async cancelBooking() {
       try {
         this.processingCancel = true;
-        // เรียกใช้ API เพื่อยกเลิกการจอง
-        await this.$axios.$delete(`/test-drives/${this.booking.id}`);
-        
+
+        // ✅ ใช้ brandApi helper - DELETE /api/{brandCode}/test-drives/{id}
+        await deleteTestDrive(this.$axios, this.booking.id);
+
         // ปิด modal
         this.showCancelConfirm = false;
-        
+
         // แสดงข้อความแจ้งเตือน
-        if (this.$toast) {
+        if (this.$store && this.$store.state.notifications) {
+          this.$store.dispatch('notifications/add', {
+            type: 'success',
+            message: 'ยกเลิกคิวเรียบร้อยแล้ว'
+          });
+        } else if (this.$toast) {
           this.$toast.success("ยกเลิกคิวเรียบร้อยแล้ว");
         } else {
           alert("ยกเลิกคิวเรียบร้อยแล้ว");
         }
-        
+
         // กลับไปยังหน้าหลัก
-        this.$router.push("/queue");
+        this.$router.push("/");
       } catch (error) {
         console.error("Error cancelling booking:", error);
-        
+
         // กำหนดข้อความแสดงข้อผิดพลาดที่เฉพาะเจาะจงมากขึ้น
         let errorMessage = "เกิดข้อผิดพลาดในการยกเลิกคิว กรุณาลองใหม่อีกครั้ง";
-        
+
         // ตรวจสอบสถานะข้อผิดพลาดจาก API
         if (error.response) {
           if (error.response.status === 404) {
@@ -305,8 +313,13 @@ export default {
             errorMessage = error.response.data.message;
           }
         }
-        
-        if (this.$toast) {
+
+        if (this.$store && this.$store.state.notifications) {
+          this.$store.dispatch('notifications/add', {
+            type: 'error',
+            message: errorMessage
+          });
+        } else if (this.$toast) {
           this.$toast.error(errorMessage);
         } else {
           alert(errorMessage);
