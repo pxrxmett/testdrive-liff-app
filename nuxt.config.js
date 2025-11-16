@@ -76,19 +76,19 @@ export default {
   publicRuntimeConfig: {
     liffId: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
     apiUrl: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api',
-    baseUrl: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app',
+    baseUrl: process.env.BASE_URL || 'https://testdrive-liff-app-production-91da.up.railway.app',
     nodeEnv: process.env.NODE_ENV,
     // Keep legacy keys for backward compatibility
     LIFF_ID: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
     API_URL: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api',
-    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app'
+    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production-91da.up.railway.app'
   },
   
   privateRuntimeConfig: {},
   
   env: {
     LIFF_ID: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
-    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app',
+    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production-91da.up.railway.app',
     API_URL: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api'
   },
   
