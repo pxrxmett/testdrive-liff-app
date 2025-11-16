@@ -20,7 +20,7 @@ export function getBrandCode() {
 /**
  * Build brand-scoped API path
  * @param {string} endpoint - API endpoint (e.g., '/stock', '/test-drives')
- * @returns {string} Full path (e.g., '/api/isuzu/stock')
+ * @returns {string} Full path (e.g., '/isuzu/stock')
  */
 export function buildBrandApiPath(endpoint) {
   const brandCode = getBrandCode()
@@ -32,7 +32,8 @@ export function buildBrandApiPath(endpoint) {
   // Remove leading slash from endpoint if exists
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
 
-  return `/api/${brandCode}/${cleanEndpoint}`
+  // ✅ FIX: Don't add /api prefix - axios baseURL already has it
+  return `/${brandCode}/${cleanEndpoint}`
 }
 
 /**
