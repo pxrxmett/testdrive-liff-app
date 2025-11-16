@@ -17,7 +17,22 @@ export const getters = {
   lineProfile: state => state.lineProfile,
   lineAccessToken: state => state.lineAccessToken,
   staffCode: state => state.staffCode,
-  staffInfo: state => state.staffInfo
+  staffInfo: state => state.staffInfo,
+  brandCode: state => {
+    // Get brandCode from multiple sources with fallback
+    return state.staffInfo?.brandCode ||
+           state.user?.brandCode ||
+           (process.client ? localStorage.getItem('brandCode') : null) ||
+           'ISUZU'
+  },
+  brandTheme: (state, getters) => {
+    // Dynamically import getTheme to avoid SSR issues
+    if (process.client) {
+      const { getTheme } = require('~/utils/brandTheme')
+      return getTheme(getters.brandCode)
+    }
+    return null
+  }
 }
 
 export const mutations = {

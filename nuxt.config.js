@@ -20,13 +20,16 @@ export default {
   router: {
     middleware: ['auth']
   },
-  
-  css: [],
-  
+
+  css: [
+    '~/assets/css/themes.css'
+  ],
+
   plugins: [
     { src: '~/plugins/liff.js', mode: 'client' },
     { src: '~/plugins/axios.js' },
-    '~/plugins/dayjs.js'
+    '~/plugins/dayjs.js',
+    { src: '~/plugins/theme.js', mode: 'client' }
   ],
   
   components: true,
