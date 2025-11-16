@@ -239,7 +239,7 @@ export default {
           console.log('ยังไม่ได้เชื่อมโยงบัญชี - Redirect ไปหน้าเชื่อมโยง');
           // Redirect ไปหน้าเชื่อมโยงบัญชี
           setTimeout(() => {
-            this.$router.push('/staff/link-account');
+            this.$router.push('/link-account');
           }, 2000); // รอ 2 วินาทีให้ผู้ใช้เห็นข้อความ
         }
 
