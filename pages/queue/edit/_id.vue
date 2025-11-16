@@ -48,10 +48,22 @@
         <!-- Phone Number -->
         <div class="form-group">
           <label class="form-label">เบอร์โทรศัพท์</label>
-          <input 
-            type="text" 
+          <input
+            type="tel"
             v-model="bookingData.phone"
             placeholder="0XX-XXX-XXXX"
+            class="form-input"
+            required
+          >
+        </div>
+
+        <!-- License Number -->
+        <div class="form-group">
+          <label class="form-label">เลขที่ใบขับขี่</label>
+          <input
+            type="text"
+            v-model="bookingData.licenseNumber"
+            placeholder="XX-XXXXXXX-XX"
             class="form-input"
             required
           >
@@ -116,10 +128,21 @@
           </p>
         </div>
 
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ</label>
+          <textarea
+            v-model="bookingData.notes"
+            placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"
+            class="form-input form-textarea"
+            rows="4"
+          ></textarea>
+        </div>
+
         <!-- Status -->
         <div class="form-group">
           <label class="form-label">สถานะ</label>
-          <select 
+          <select
             v-model="bookingData.status"
             class="form-input"
             @change="onStatusChange"
@@ -141,14 +164,30 @@
           >
         </div>
 
-        <!-- Submit Button -->
-        <button 
-          type="submit" 
-          class="submit-button"
-          :disabled="isSubmitting || availableVehicles.length === 0"
-        >
-          {{ isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข' }}
-        </button>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <!-- Send to Customer Signature Button -->
+          <button
+            type="button"
+            class="signature-button"
+            @click="sendToCustomerSignature"
+            :disabled="isSubmitting || !bookingData.vehicleId"
+          >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            ส่งให้ลูกค้าเซ็น
+          </button>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="submit-button"
+            :disabled="isSubmitting || availableVehicles.length === 0"
+          >
+            {{ isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข' }}
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -165,9 +204,11 @@ export default {
       bookingData: {
         customerName: '',
         phone: '',
+        licenseNumber: '',
         date: '',
         time: '',
         vehicleId: null,
+        notes: '',
         status: 'pending',
         actualEndTime: ''
       },
@@ -371,11 +412,13 @@ export default {
         this.bookingData = {
           customerName: response.customer_name || '',
           phone: this.formatPhone(response.customer_phone || ''),
+          licenseNumber: response.customer_license_number || '',
           date: this.extractDate(response.start_time),
           time: this.extractTime(response.start_time),
           vehicleId: response.vehicle_id || null,
+          notes: response.notes || '',
           status: response.status || 'pending',
-          actualEndTime: response.actual_end_time ? 
+          actualEndTime: response.actual_end_time ?
             this.formatDateTimeLocal(response.actual_end_time) : ''
         };
         
@@ -537,28 +580,83 @@ export default {
         alert('กรุณากรอกชื่อลูกค้า');
         return false;
       }
-      
+
       if (!this.bookingData.phone.trim()) {
         alert('กรุณากรอกเบอร์โทรศัพท์');
         return false;
       }
-      
+
+      if (!this.bookingData.licenseNumber.trim()) {
+        alert('กรุณากรอกเลขที่ใบขับขี่');
+        return false;
+      }
+
       if (!this.bookingData.date) {
         alert('กรุณาเลือกวันที่');
         return false;
       }
-      
+
       if (!this.bookingData.time) {
         alert('กรุณาเลือกเวลา');
         return false;
       }
-      
+
       if (!this.bookingData.vehicleId) {
         alert('กรุณาเลือกรถ');
         return false;
       }
-      
+
       return true;
+    },
+
+    async sendToCustomerSignature() {
+      // Validate form first
+      if (!this.validateForm()) {
+        return;
+      }
+
+      try {
+        // Save the booking first
+        this.isSubmitting = true;
+        const bookingId = this.$route.params.id;
+
+        // แปลงวันที่และเวลา
+        const dateParts = this.bookingData.date.split('-');
+        const timeParts = this.bookingData.time.split(':');
+
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]) - 1;
+        const day = parseInt(dateParts[2]);
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+
+        const startDateTime = new Date(year, month, day, hours, minutes);
+        const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000));
+
+        const apiUpdateData = {
+          customer_name: this.bookingData.customerName.trim(),
+          customer_phone: this.bookingData.phone.replace(/[-\s]/g, ''),
+          customer_license_number: this.bookingData.licenseNumber.trim(),
+          vehicle_id: parseInt(this.bookingData.vehicleId),
+          start_time: startDateTime.toISOString(),
+          expected_end_time: endDateTime.toISOString(),
+          notes: this.bookingData.notes || '',
+          status: this.bookingData.status
+        };
+
+        console.log('บันทึกข้อมูลก่อนส่งให้ลูกค้าเซ็น:', apiUpdateData);
+
+        await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
+
+        // Redirect to signature page
+        this.$router.push(`/queue/signature/${bookingId}`);
+
+      } catch (err) {
+        console.error('Error saving before signature:', err);
+        alert('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่');
+      } finally {
+        this.isSubmitting = false;
+      }
     },
     
     async updateBooking() {
@@ -589,10 +687,12 @@ export default {
         const apiUpdateData = {
           customer_name: this.bookingData.customerName.trim(),
           customer_phone: this.bookingData.phone.replace(/[-\s]/g, ''),
+          customer_license_number: this.bookingData.licenseNumber.trim(),
           vehicle_id: parseInt(this.bookingData.vehicleId),
           start_time: startDateTime.toISOString(),
           expected_end_time: endDateTime.toISOString(),
-          actual_end_time: this.bookingData.actualEndTime ? 
+          notes: this.bookingData.notes || '',
+          actual_end_time: this.bookingData.actualEndTime ?
             new Date(this.bookingData.actualEndTime).toISOString() : null,
           status: this.bookingData.status
         };
@@ -654,17 +754,26 @@ export default {
 </script>
 
 <style scoped>
+/* Isuzu Brand Colors */
+:root {
+  --isuzu-red: #E30613;
+  --isuzu-gray-dark: #2D2D2D;
+  --isuzu-gray-light: #F5F5F5;
+  --success: #27AE60;
+  --warning: #F39C12;
+}
+
 /* Base styles */
 .booking-edit-page {
   font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f9fafb;
+  background-color: #F5F5F5;
   height: 100%;
   min-height: 100vh;
 }
 
 /* Header */
 .header {
-  background-color: #dc2626;
+  background-color: #E30613;
   color: white;
   padding: 1rem;
 }
@@ -749,8 +858,8 @@ export default {
 
 .form-input:focus {
   outline: none;
-  border-color: #dc2626;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+  border-color: #E30613;
+  box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.1);
 }
 
 .form-input::placeholder {
@@ -787,7 +896,7 @@ export default {
 }
 
 .car-option.selected {
-  border-color: #dc2626;
+  border-color: #E30613;
   background-color: #fef2f2;
 }
 
@@ -804,13 +913,13 @@ export default {
 }
 
 .car-option.selected .radio-button {
-  border-color: #dc2626;
+  border-color: #E30613;
 }
 
 .radio-inner {
   width: 0.75rem;
   height: 0.75rem;
-  background-color: #dc2626;
+  background-color: #E30613;
   border-radius: 50%;
 }
 
@@ -854,24 +963,67 @@ export default {
   color: #991b1b;
 }
 
-/* Submit Button */
-.submit-button {
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.signature-button {
   width: 100%;
   padding: 1rem;
-  background-color: #dc2626;
+  background-color: #27AE60;
   color: white;
   border: none;
   border-radius: 0.5rem;
   font-weight: 500;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 0.5rem;
-  margin-bottom: 2rem; /* เพิ่ม margin-bottom เพื่อหลีกเลี่ยง nav bar */
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.signature-button:hover:not(:disabled) {
+  background-color: #229954;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.signature-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.signature-button .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Submit Button */
+.submit-button {
+  width: 100%;
+  padding: 1rem;
+  background-color: #E30613;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #b91c1c;
+  background-color: #c10510;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button:disabled {

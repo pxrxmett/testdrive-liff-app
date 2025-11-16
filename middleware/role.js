@@ -1,131 +1,138 @@
 // middleware/role.js - Role-Based Access Control
-// ตรวจสอบสิทธิ์การเข้าถึงตาม role ของผู้ใช้
+// ใช้สำหรับตรวจสอบสิทธิ์การเข้าถึงตาม role ของผู้ใช้
 
 /**
  * Role Definitions:
- * - admin: ผู้ดูแลระบบ (Full access)
- * - manager: ผู้จัดการ (Management access)
- * - staff: พนักงาน (Standard access)
- * - user: ผู้ใช้ทั่วไป (Limited access)
+ * - admin: ผู้ดูแลระบบ (เข้าถึงได้ทุกอย่าง)
+ * - manager: ผู้จัดการ (อนุมัติ test drive, ดูรายงาน)
+ * - staff: พนักงาน (จัดการ test drive, ลูกค้า)
+ * - user: ลูกค้าทั่วไป (จองและดู test drive ของตัวเอง)
  */
 
-export default function ({ store, redirect, route }) {
-  // ทำงานเฉพาะฝั่ง client
-  if (!process.client) return;
+const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  STAFF: 'staff',
+  USER: 'user'
+}
 
-  console.log('🔒 Role middleware: checking access for', route.path);
+/**
+ * Route Access Control
+ * กำหนดว่า route ไหนต้องการ role อะไรบ้าง
+ */
+const ROUTE_PERMISSIONS = {
+  // Admin only routes
+  '/admin': [ROLES.ADMIN],
+  '/admin/users': [ROLES.ADMIN],
+  '/admin/settings': [ROLES.ADMIN],
+  '/admin/reports': [ROLES.ADMIN],
 
-  // ดึงข้อมูลผู้ใช้จาก store
-  const user = store.getters['auth/user'];
-  const staffInfo = store.getters['auth/staffInfo'];
+  // Manager and Admin routes
+  '/manager': [ROLES.ADMIN, ROLES.MANAGER],
+  '/manager/approvals': [ROLES.ADMIN, ROLES.MANAGER],
+  '/manager/analytics': [ROLES.ADMIN, ROLES.MANAGER],
 
-  // ถ้ายังไม่มี user ให้ผ่านไป
-  if (!user && !staffInfo) {
-    console.warn('⚠️ No user found in store');
-    return; // ให้ auth middleware จัดการ
+  // Staff, Manager, and Admin routes
+  '/staff': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF],
+  '/staff/test-drives': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF],
+  '/staff/customers': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF],
+  '/staff/vehicles': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF],
+
+  // User routes (authenticated users only)
+  '/my-bookings': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF, ROLES.USER],
+  '/profile': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF, ROLES.USER],
+  '/book-test-drive': [ROLES.ADMIN, ROLES.MANAGER, ROLES.STAFF, ROLES.USER]
+}
+
+/**
+ * Role Hierarchy (for comparison)
+ * Higher number = more privileges
+ */
+const ROLE_HIERARCHY = {
+  [ROLES.USER]: 1,
+  [ROLES.STAFF]: 2,
+  [ROLES.MANAGER]: 3,
+  [ROLES.ADMIN]: 4
+}
+
+/**
+ * Check if user has required role for a route
+ * @param {string} userRole - User's current role
+ * @param {string} route - Route path to check
+ * @returns {boolean} - True if user has permission
+ */
+function hasPermission(userRole, route) {
+  // Find the most specific route match
+  const routePattern = Object.keys(ROUTE_PERMISSIONS).find(pattern => {
+    return route.startsWith(pattern)
+  })
+
+  if (!routePattern) {
+    // No specific permission required - allow access
+    return true
   }
 
-  // ดึง role ของผู้ใช้
-  const userRole = user?.role || staffInfo?.role || 'staff'; // default เป็น staff
-  console.log('👤 User role:', userRole);
+  const allowedRoles = ROUTE_PERMISSIONS[routePattern]
+  return allowedRoles.includes(userRole)
+}
 
-  // กำหนดเส้นทางตาม role
-  const roleBasedRoutes = {
-    // Admin-only routes
-    admin: [
-      '/admin',
-      '/settings',
-      '/users/manage'
-    ],
+/**
+ * Get redirect path based on user role
+ * @param {string} role - User's role
+ * @returns {string} - Default path for the role
+ */
+function getDefaultPathForRole(role) {
+  switch (role) {
+    case ROLES.ADMIN:
+      return '/admin'
+    case ROLES.MANAGER:
+      return '/manager'
+    case ROLES.STAFF:
+      return '/staff'
+    case ROLES.USER:
+    default:
+      return '/my-bookings'
+  }
+}
 
-    // Manager and Admin routes
-    manager: [
-      '/reports',
-      '/analytics',
-      '/staff/manage'
-    ],
+/**
+ * Middleware function
+ * จะทำงานก่อนที่จะเข้าถึงหน้าใดๆ ที่กำหนด
+ */
+export default function ({ store, route, redirect }) {
+  // ตรวจสอบว่า user login แล้วหรือยัง
+  const isAuthenticated = store.state.auth.isAuthenticated
+  const user = store.state.auth.user
 
-    // Staff, Manager, and Admin routes (default accessible to all authenticated users)
-    staff: [
-      '/',
-      '/booking',
-      '/calendar',
-      '/queue',
-      '/test-drive',
-      '/profile',
-      '/link-account'
-    ]
-  };
+  if (!isAuthenticated || !user) {
+    // ถ้ายังไม่ login ให้ไปหน้า login
+    // (ยกเว้น public routes ที่ auth middleware จะจัดการ)
+    return redirect('/login')
+  }
 
-  // ฟังก์ชันตรวจสอบสิทธิ์
-  const hasAccess = (userRole, routePath) => {
-    // Admin มีสิทธิ์เข้าถึงทุกหน้า
-    if (userRole === 'admin') {
-      return true;
-    }
+  const userRole = user.role
+  const currentPath = route.path
 
-    // Manager เข้าถึงได้ทั้ง manager และ staff routes
-    if (userRole === 'manager') {
-      return isRouteInCategory(routePath, ['manager', 'staff']);
-    }
+  // ตรวจสอบว่า user มีสิทธิ์เข้าถึง route นี้หรือไม่
+  if (!hasPermission(userRole, currentPath)) {
+    // ถ้าไม่มีสิทธิ์ ให้ redirect ไปหน้าที่เหมาะสมกับ role
+    const defaultPath = getDefaultPathForRole(userRole)
 
-    // Staff และ User เข้าถึงได้เฉพาะ staff routes
-    if (userRole === 'staff' || userRole === 'user') {
-      return isRouteInCategory(routePath, ['staff']);
-    }
-
-    // Default: ไม่มีสิทธิ์
-    return false;
-  };
-
-  // ฟังก์ชันช่วยตรวจสอบว่า route อยู่ใน category ไหน
-  const isRouteInCategory = (routePath, allowedCategories) => {
-    for (const category of allowedCategories) {
-      const routes = roleBasedRoutes[category] || [];
-
-      for (const allowedRoute of routes) {
-        // ตรวจสอบ exact match หรือ route ที่ขึ้นต้นด้วย allowedRoute
-        if (routePath === allowedRoute || routePath.startsWith(allowedRoute + '/')) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
-  // ตรวจสอบสิทธิ์การเข้าถึง
-  if (!hasAccess(userRole, route.path)) {
-    console.error('❌ Access denied:', {
-      role: userRole,
-      path: route.path
-    });
-
-    // แสดงข้อความแจ้งเตือน
-    if (process.client && store.dispatch) {
+    // แสดง notification ว่าไม่มีสิทธิ์เข้าถึง
+    if (store.state.notifications) {
       store.dispatch('notifications/add', {
         type: 'error',
         message: 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้',
         duration: 3000
-      }).catch(() => {
-        // Fallback ถ้า notifications module ไม่มี
-        console.warn('⚠️ Notifications module not available');
-      });
+      })
     }
 
-    // Redirect ตาม role
-    const defaultRoutes = {
-      admin: '/admin',
-      manager: '/reports',
-      staff: '/',
-      user: '/'
-    };
-
-    const redirectPath = defaultRoutes[userRole] || '/';
-
-    console.log(`↩️ Redirecting to: ${redirectPath}`);
-    return redirect(redirectPath);
+    return redirect(defaultPath)
   }
 
-  console.log('✅ Access granted for', userRole);
+  // มีสิทธิ์เข้าถึง - อนุญาต
+  return true
 }
+
+// Export for testing and external use
+export { ROLES, ROUTE_PERMISSIONS, ROLE_HIERARCHY, hasPermission, getDefaultPathForRole }

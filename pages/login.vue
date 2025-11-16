@@ -2,9 +2,7 @@
   <div class="login-page">
     <div class="login-container">
       <div class="login-header">
-        <div class="logo">
-          <img src="/logo.png" alt="Logo" class="logo-image" />
-        </div>
+        <!-- Logo removed - add your logo.png to /static/ folder if needed -->
         <h1>ระบบจองทดลองขับรถ</h1>
         <p>เข้าสู่ระบบผ่าน LINE</p>
       </div>
@@ -212,15 +210,37 @@ export default {
 
         // เรียกใช้ store action
         const result = await this.$store.dispatch('auth/checkLineRegistration');
-        
+
         this.connectionResult = result;
-        
-        // ถ้าพบการเชื่อมโยง ให้พยายามล็อกอิน
+
+        // ถ้าพบการเชื่อมโยง
         if (result.registered) {
-          console.log('พบการเชื่อมโยงบัญชี พยายามล็อกอิน...');
-          await this.attemptSystemLogin();
+          console.log('✅ พบการเชื่อมโยงบัญชี!');
+
+          // ✅ checkLineRegistration จะคืน token มาแล้ว ไม่ต้องเรียก /auth/line-login อีก
+          const token = result.token || this.$store.state.auth?.token || localStorage.getItem('token');
+
+          if (token) {
+            console.log('✅ มี token แล้ว - Redirect ไปหน้า Dashboard');
+            setTimeout(() => {
+              const redirectPath = localStorage.getItem('redirectAfterLogin');
+              if (redirectPath && redirectPath !== '/login') {
+                localStorage.removeItem('redirectAfterLogin');
+                this.$router.push(redirectPath);
+              } else {
+                this.$router.push('/');
+              }
+            }, 500);
+          } else {
+            console.error('❌ ไม่พบ token แม้ว่าจะเชื่อมโยงแล้ว - กรุณาติดต่อผู้ดูแลระบบ');
+            this.errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง';
+          }
         } else {
-          console.log('ยังไม่ได้เชื่อมโยงบัญชี');
+          console.log('ยังไม่ได้เชื่อมโยงบัญชี - Redirect ไปหน้าเชื่อมโยง');
+          // Redirect ไปหน้าเชื่อมโยงบัญชี
+          setTimeout(() => {
+            this.$router.push('/link-account');
+          }, 2000); // รอ 2 วินาทีให้ผู้ใช้เห็นข้อความ
         }
 
         // เก็บข้อมูล debug
@@ -237,35 +257,6 @@ export default {
         this.errorMessage = error.response?.data?.message || error.message || 'เกิดข้อผิดพลาดในการตรวจสอบ';
       } finally {
         this.checkingConnection = false;
-      }
-    },
-
-    async attemptSystemLogin() {
-      try {
-        const accessToken = await window.liff.getAccessToken();
-        
-        const loginResult = await this.$store.dispatch('auth/loginWithLine', {
-          lineProfile: this.lineProfile,
-          lineAccessToken: accessToken
-        });
-
-        if (loginResult.success) {
-          console.log('ล็อกอินสำเร็จ!');
-          
-          // ตรวจสอบ redirect path
-          const redirectPath = localStorage.getItem('redirectAfterLogin');
-          if (redirectPath && redirectPath !== '/login') {
-            localStorage.removeItem('redirectAfterLogin');
-            this.$router.push(redirectPath);
-          } else {
-            this.$router.push('/');
-          }
-        } else {
-          this.errorMessage = loginResult.error || 'การล็อกอินไม่สำเร็จ';
-        }
-      } catch (error) {
-        console.error('เกิดข้อผิดพลาดในการล็อกอินระบบ:', error);
-        this.errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
       }
     },
 

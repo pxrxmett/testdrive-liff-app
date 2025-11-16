@@ -119,29 +119,26 @@ export default async function ({ store, redirect, route }) {
   }
 }
 
-// ✅ Helper function สำหรับพยายามล็อกอินด้วย LINE
+// ✅ Helper function สำหรับตรวจสอบและล็อกอินด้วย LINE
 async function attemptLineLogin(store, lineProfile, accessToken, redirect) {
   try {
-    console.log('พยายามล็อกอินด้วย LINE...');
-    
-    // ตรวจสอบการเชื่อมโยงบัญชี
+    console.log('ตรวจสอบการเชื่อมโยงบัญชี LINE...');
+
+    // ✅ เรียก checkLineRegistration ซึ่งจะคืน token มาเลยถ้าเชื่อมโยงแล้ว
     const checkResult = await store.dispatch('auth/checkLineRegistration');
-    
+
     if (!checkResult.registered) {
       console.log('ยังไม่ได้เชื่อมโยงบัญชี จะ redirect ไปหน้าล็อกอิน');
       redirectToLogin(redirect, null, 'ยังไม่ได้เชื่อมโยงบัญชี LINE กับพนักงาน');
       return;
     }
-    
-    // พยายามล็อกอินด้วย LINE
-    const loginResult = await store.dispatch('auth/loginWithLine', {
-      lineProfile,
-      lineAccessToken: accessToken
-    });
-    
-    if (loginResult.success) {
-      console.log('ล็อกอินด้วย LINE สำเร็จ');
-      
+
+    // ✅ checkLineRegistration จะคืน token มาแล้ว ไม่ต้องเรียก /auth/line-login อีก
+    const token = checkResult.token || store.state.auth?.token || localStorage.getItem('token');
+
+    if (token) {
+      console.log('✅ มี token แล้ว - ล็อกอินสำเร็จ');
+
       // ตรวจสอบ redirect path
       const redirectPath = localStorage.getItem('redirectAfterLogin');
       if (redirectPath && redirectPath !== '/login') {
@@ -149,11 +146,11 @@ async function attemptLineLogin(store, lineProfile, accessToken, redirect) {
         window.location.href = redirectPath;
       }
     } else {
-      console.error('ล็อกอินด้วย LINE ไม่สำเร็จ:', loginResult.error);
-      redirectToLogin(redirect, null, loginResult.error);
+      console.error('❌ ไม่พบ token แม้ว่าจะเชื่อมโยงแล้ว');
+      redirectToLogin(redirect, null, 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     }
   } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการล็อกอินด้วย LINE:', error);
+    console.error('เกิดข้อผิดพลาดในการตรวจสอบ LINE:', error);
     redirectToLogin(redirect, null, 'เกิดข้อผิดพลาดในการล็อกอิน');
   }
 }

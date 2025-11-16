@@ -1,5 +1,8 @@
 // plugins/axios.js
 export default function ({ $axios, redirect, store }) {
+  // ✅ Confirm axios plugin loaded with latest token detection code
+  console.log('🔌 Axios plugin initialized - v2.0 with comprehensive token detection');
+
   // ตั้งค่าตัวแปรสำหรับตรวจสอบโหมดและสภาพแวดล้อม
   const isDev = process.env.NODE_ENV === 'development';
   const log = isDev ? console.log : () => {};
@@ -81,25 +84,62 @@ export default function ({ $axios, redirect, store }) {
   // Response Interceptor - เมื่อได้รับการตอบกลับจากเซิร์ฟเวอร์
   // ================================================================
   $axios.onResponse(response => {
+    // Always log responses to confirm interceptor is running
+    console.log(`📥 API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
     log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`);
-    
-    // ตรวจสอบและบันทึก token ใหม่ถ้ามี (รองรับหลายรูปแบบ)
-    const newToken = response.data?.token || 
-                    response.data?.access_token || 
-                    response.data?.accessToken;
-    
+
+    // DEBUG: แสดง response structure (แม้ใน production)
+    if (response.config.url?.includes('/line-integration/check')) {
+      console.log('🔍 DEBUG /line-integration/check response:', {
+        data: response.data,
+        dataKeys: Object.keys(response.data || {}),
+        hasToken: !!response.data?.token,
+        hasAccessToken: !!response.data?.access_token,
+        hasAccessToken2: !!response.data?.accessToken,
+        // Check nested data
+        hasNestedData: !!response.data?.data,
+        nestedKeys: response.data?.data ? Object.keys(response.data.data) : []
+      });
+    }
+
+    // ตรวจสอบและบันทึก token ใหม่ถ้ามี
+    // รองรับทั้ง direct และ nested data
+    const responseData = response.data?.data || response.data;
+    const newToken = responseData?.token ||
+                     responseData?.access_token ||
+                     responseData?.accessToken;
+
+
     if (newToken && process.client) {
       try {
+        // บันทึกทั้ง 'token' และ 'access_token' เพื่อความชัวร์
         localStorage.setItem(TOKEN_KEY, newToken);
-        
-        if (store?.commit) {
+        localStorage.setItem('access_token', newToken);
+
+        console.log('✅ Token saved to localStorage:', {
+          tokenKey: TOKEN_KEY,
+          tokenPreview: newToken.substring(0, 20) + '...',
+          foundIn: response.data?.data ? 'nested data' : 'direct data'
+        });
+
+        // อัพเดท store (ถ้ามี)
+        if (store && typeof store.commit === 'function') {
           store.commit('auth/setToken', newToken);
           store.commit('auth/setAuth', true);
-          log('🔑 Token updated');
+          console.log('✅ Token committed to Vuex store');
+        } else {
+          console.warn('⚠️ Store not available, token only in localStorage');
         }
       } catch (e) {
-        error('❌ Failed to save token:', e);
+        console.error('❌ Failed to save token:', e);
       }
+    } else if (response.config.url?.includes('/line-integration/check')) {
+      console.warn('⚠️ No token found in response from /line-integration/check');
+      console.warn('   Response structure:', {
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        dataKeys: response.data ? Object.keys(response.data) : []
+      });
     }
     
     // ตรวจสอบและบันทึกข้อมูลพนักงานถ้ามี

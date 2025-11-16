@@ -87,24 +87,44 @@ export default {
     async linkAccount() {
       try {
         this.loading = true
-        
+
         if (!this.lineProfile || !this.lineProfile.userId) {
           throw new Error('ไม่พบข้อมูล LINE ID')
         }
-        
-        // เรียกใช้ API เชื่อมโยงบัญชี
-        const response = await this.$axios.$post('/line-integration/link', {
-          lineUserId: this.lineProfile.userId, // ✅ Fixed: lineId → lineUserId
-          staffCode: this.staffId, // Use staffCode for consistency
-          lineAccessToken: this.lineProfile.accessToken
+
+        // ✅ เปลี่ยนเป็น /link-simple (ไม่ต้องส่ง lineAccessToken)
+        const response = await this.$axios.$post('/line-integration/link-simple', {
+          lineUserId: this.lineProfile.userId,
+          staffCode: this.staffId
         })
-        
+
         if (response.success) {
+          // ✅ บันทึก token ที่ได้จาก response
+          if (response.token) {
+            this.$store.commit('auth/setToken', response.token)
+            this.$store.commit('auth/setAuth', true)
+            localStorage.setItem('token', response.token)
+            console.log('✅ Token saved from link-simple:', response.token.substring(0, 20) + '...')
+          }
+
+          // ✅ บันทึก brandCode ที่ได้จาก response
+          const brandCode = response.brandCode || response.brand_code || response.brand
+          if (brandCode) {
+            localStorage.setItem('brandCode', brandCode)
+            console.log('✅ brandCode saved from link-simple:', brandCode)
+          }
+
+          // ✅ บันทึกข้อมูล staff
+          if (response.staff) {
+            this.$store.commit('auth/setStaffInfo', response.staff)
+            localStorage.setItem('staffInfo', JSON.stringify(response.staff))
+          }
+
           this.$store.dispatch('notifications/add', {
             type: 'success',
             message: 'เชื่อมโยงบัญชีสำเร็จ'
           })
-          
+
           // ไปที่หน้าหลัก
           this.$router.push('/')
         } else {
@@ -112,7 +132,7 @@ export default {
         }
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี:', error)
-        
+
         this.$store.dispatch('notifications/add', {
           type: 'error',
           message: error.message || 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่อีกครั้ง'

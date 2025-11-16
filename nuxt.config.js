@@ -44,13 +44,13 @@ export default {
   
   axios: {
     // ใน production ใช้ direct URL, ใน dev ใช้ proxy
-    baseURL: process.env.NODE_ENV === 'production' 
-      ? (process.env.API_URL || 'https://isuzu-liff.up.railway.app/api')
+    baseURL: process.env.NODE_ENV === 'production'
+      ? (process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api')
       : '/api',
-    
+
     // เปิด proxy เฉพาะ development
     proxy: process.env.NODE_ENV !== 'production',
-    
+
     headers: {
       common: {
         'Accept': 'application/json, text/plain, */*'
@@ -74,18 +74,22 @@ export default {
       },
   
   publicRuntimeConfig: {
-    LIFF_ID: process.env.LIFF_ID || '2006746784-e1y9NRqn',
-    BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
-    API_URL: process.env.API_URL || 'http://localhost:3000/api',
-    nodeEnv: process.env.NODE_ENV
+    liffId: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
+    apiUrl: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api',
+    baseUrl: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app',
+    nodeEnv: process.env.NODE_ENV,
+    // Keep legacy keys for backward compatibility
+    LIFF_ID: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
+    API_URL: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api',
+    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app'
   },
   
   privateRuntimeConfig: {},
   
   env: {
-    LIFF_ID: process.env.LIFF_ID || '2006746784-e1y9NRqn',
-    BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
-    API_URL: process.env.API_URL || 'http://localhost:3000/api'
+    LIFF_ID: process.env.NUXT_PUBLIC_LIFF_ID || process.env.LIFF_ID || '2006746784-e1y9NRqn',
+    BASE_URL: process.env.BASE_URL || 'https://testdrive-liff-app-production.up.railway.app',
+    API_URL: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'https://isuzustock-management-production.up.railway.app/api'
   },
   
   server: {
