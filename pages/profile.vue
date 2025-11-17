@@ -323,9 +323,28 @@ export default {
 
     // Helper methods
     getFullName() {
+      // ✅ ลำดับความสำคัญ: name (fullname) > first_name + last_name > lineProfile.displayName
+      if (this.staffData.name) {
+        return this.staffData.name;
+      }
+
       const firstName = this.staffData.first_name || '';
       const lastName = this.staffData.last_name || '';
-      return firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName || 'ไม่ระบุชื่อ';
+
+      if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+      }
+
+      if (firstName || lastName) {
+        return firstName || lastName;
+      }
+
+      // Fallback: ใช้ชื่อจาก LINE เป็นทางเลือกสุดท้าย
+      if (this.lineProfile && this.lineProfile.displayName) {
+        return `${this.lineProfile.displayName} (LINE)`;
+      }
+
+      return 'ไม่ระบุชื่อ';
     },
 
     getInitials() {
