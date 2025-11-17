@@ -484,8 +484,9 @@
   
           // โหลดข้อมูลพนักงาน
           if (this.testDriveData.responsible_staff) {
-            const staffResponse = await this.$axios.get(`/staffs/${this.testDriveData.responsible_staff}`)
-            this.staffInfo = staffResponse.data
+            // ✅ FIX: Use correct endpoint - /line-integration/staff/{id}
+            const { getStaffById } = await import('~/utils/brandApi')
+            this.staffInfo = await getStaffById(this.$axios, this.testDriveData.responsible_staff)
           }
   
         } catch (error) {

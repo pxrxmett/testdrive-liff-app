@@ -559,15 +559,16 @@ export default {
     // โหลดข้อมูลพนักงาน
     async fetchStaffData() {
       try {
-        const response = await this.$axios.get('/staffs');
-        const staffs = response.data;
-        
+        // ✅ FIX: Use brandApi helper - GET /api/{brandCode}/staff
+        const { getStaffList } = await import('~/utils/brandApi');
+        const staffs = await getStaffList(this.$axios);
+
         // แปลงเป็น object เพื่อหาได้เร็ว - ใช้ property shorthand
         this.staffData = staffs.reduce((acc, staff) => {
           acc[staff.id] = staff;
           return acc;
         }, {});
-        
+
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลพนักงาน:', error);
       }

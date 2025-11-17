@@ -389,9 +389,10 @@ export const actions = {
       if (state.staffInfo && state.staffInfo.staff_code) {
         staffCode = state.staffInfo.staff_code
       } else {
-        // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
+        // ✅ FIX: Use correct endpoint - /line-integration/staff/{id}
         try {
-          const staffData = await this.$axios.$get(`/staffs/${staffId}`)
+          const { getStaffById } = await import('~/utils/brandApi')
+          const staffData = await getStaffById(this.$axios, staffId)
           staffCode = staffData.staff_code
         } catch (error) {
           throw new Error('ไม่สามารถดึงข้อมูล staff_code ได้')
@@ -507,11 +508,10 @@ export const actions = {
       if (!token) {
         return { success: false, error: 'ไม่พบ token' }
       }
-      
-      // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
-      const staffResponse = await this.$axios.$get(`/staffs/${staffId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+
+      // ✅ FIX: Use correct endpoint - /line-integration/staff/{id}
+      const { getStaffById } = await import('~/utils/brandApi')
+      const staffResponse = await getStaffById(this.$axios, staffId)
       
       if (staffResponse) {
         commit('setStaffInfo', staffResponse)

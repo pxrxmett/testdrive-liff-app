@@ -231,3 +231,32 @@ export async function cancelTestDrive(axios, testDriveId) {
   console.warn('⚠️ cancelTestDrive is deprecated. Use deleteTestDrive instead.')
   return deleteTestDrive(axios, testDriveId)
 }
+
+/**
+ * Get staff list for the brand
+ * @param {object} axios - Axios instance from Nuxt
+ * @returns {Promise<Array>} List of staff members
+ */
+export async function getStaffList(axios) {
+  const path = buildBrandApiPath('/staff')
+
+  console.log(`📞 GET ${path}`)
+
+  const response = await axios.$get(path)
+  return response
+}
+
+/**
+ * Get staff by ID (using LINE integration endpoint)
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} staffId - Staff ID
+ * @returns {Promise<object>} Staff details
+ */
+export async function getStaffById(axios, staffId) {
+  const path = `/line-integration/staff/${staffId}`
+
+  console.log(`📞 GET ${path}`)
+
+  const response = await axios.$get(path)
+  return response
+}

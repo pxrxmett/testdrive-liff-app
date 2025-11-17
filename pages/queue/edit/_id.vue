@@ -232,9 +232,11 @@ export default {
     async fetchUserInfo() {
       try {
         const userInfo = this.$store.state.auth?.user;
-        
+
         if (!userInfo) {
-          const response = await this.$axios.$get('/staffs/' + this.$store.state.auth.userId);
+          // ✅ FIX: Use correct endpoint - /line-integration/staff/{id}
+          const { getStaffById } = await import('~/utils/brandApi')
+          const response = await getStaffById(this.$axios, this.$store.state.auth.userId)
           this.userInfo = {
             name: response.name || `${response.first_name || ''} ${response.last_name || ''}`.trim(),
             branch: response.department || 'สาขาหลัก'
