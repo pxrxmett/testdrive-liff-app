@@ -1,4 +1,12 @@
 // store/testDrive.js
+import {
+  getTestDriveById,
+  getTestDrives,
+  updateTestDrive,
+  submitPdpaConsent,
+  uploadSignature
+} from '~/utils/brandApi'
+
 export const state = () => ({
   currentBooking: null,
   bookings: [],
@@ -109,7 +117,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$get(`/test-drives/${bookingId}`)
+      // ✅ MIGRATED: ใช้ getTestDriveById helper (brand-scoped)
+      const response = await getTestDriveById(this.$axios, bookingId)
 
       commit('SET_CURRENT_BOOKING', response)
       return response
@@ -130,7 +139,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$get('/test-drives', { params })
+      // ✅ MIGRATED: ใช้ getTestDrives helper (brand-scoped)
+      const response = await getTestDrives(this.$axios, params)
 
       const bookings = Array.isArray(response) ? response : (response.data || [])
       commit('SET_BOOKINGS', bookings)
@@ -153,7 +163,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$patch(`/test-drives/${id}`, data)
+      // ✅ MIGRATED: ใช้ updateTestDrive helper (brand-scoped) with PATCH method
+      const response = await updateTestDrive(this.$axios, id, data, 'PATCH')
 
       commit('UPDATE_BOOKING', response)
       return response
@@ -174,9 +185,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      await this.$axios.$post(`/test-drives/${bookingId}/pdpa-consent`, {
-        consent
-      })
+      // ✅ MIGRATED: ใช้ submitPdpaConsent helper (brand-scoped)
+      await submitPdpaConsent(this.$axios, bookingId, consent)
 
       commit('SET_PDPA_CONSENT', { id: bookingId, consent })
 
@@ -198,9 +208,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      await this.$axios.$post(`/test-drives/${bookingId}/signature`, {
-        signatureData
-      })
+      // ✅ MIGRATED: ใช้ uploadSignature helper (brand-scoped + auto-compression)
+      await uploadSignature(this.$axios, bookingId, signatureData)
 
       commit('SET_SIGNATURE', { id: bookingId, signatureData })
 

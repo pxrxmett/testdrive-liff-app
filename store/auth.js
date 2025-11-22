@@ -1,4 +1,6 @@
 // store/auth.js - Complete Version with Enhanced Error Debugging
+import { getStaffById } from '~/utils/brandApi'
+
 export const state = () => ({
   token: null,
   user: null,
@@ -389,9 +391,9 @@ export const actions = {
       if (state.staffInfo && state.staffInfo.staff_code) {
         staffCode = state.staffInfo.staff_code
       } else {
-        // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
+        // ✅ MIGRATED: ใช้ getStaffById helper (brand-scoped)
         try {
-          const staffData = await this.$axios.$get(`/staffs/${staffId}`)
+          const staffData = await getStaffById(this.$axios, staffId)
           staffCode = staffData.staff_code
         } catch (error) {
           throw new Error('ไม่สามารถดึงข้อมูล staff_code ได้')
@@ -507,24 +509,22 @@ export const actions = {
       if (!token) {
         return { success: false, error: 'ไม่พบ token' }
       }
-      
-      // เดิม: /api/staffs/${staffId} → ใหม่: /staffs/${staffId}
-      const staffResponse = await this.$axios.$get(`/staffs/${staffId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
+
+      // ✅ MIGRATED: ใช้ getStaffById helper (brand-scoped)
+      const staffResponse = await getStaffById(this.$axios, staffId)
+
       if (staffResponse) {
         commit('setStaffInfo', staffResponse)
         localStorage.setItem('staffInfo', JSON.stringify(staffResponse))
-        
+
         if (staffResponse.staff_code) {
           commit('setStaffCode', staffResponse.staff_code)
           localStorage.setItem('staffCode', staffResponse.staff_code)
         }
-        
+
         return { success: true, staffInfo: staffResponse }
       }
-      
+
       return { success: false, error: 'ไม่พบข้อมูลพนักงาน' }
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการดึงข้อมูลพนักงาน:', error)

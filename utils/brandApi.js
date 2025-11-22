@@ -102,14 +102,18 @@ export async function getTestDriveById(axios, testDriveId) {
  * @param {object} axios - Axios instance from Nuxt
  * @param {number|string} testDriveId - Test drive ID
  * @param {object} updateData - Update data
+ * @param {string} method - HTTP method ('PUT' or 'PATCH', default: 'PUT')
  * @returns {Promise<object>} Updated test drive
  */
-export async function updateTestDrive(axios, testDriveId, updateData) {
+export async function updateTestDrive(axios, testDriveId, updateData, method = 'PUT') {
   const path = buildBrandApiPath(`/test-drives/${testDriveId}`)
 
-  console.log(`📞 PUT ${path}`, updateData)
+  console.log(`📞 ${method} ${path}`, updateData)
 
-  const response = await axios.$put(path, updateData)
+  const response = method === 'PATCH'
+    ? await axios.$patch(path, updateData)
+    : await axios.$put(path, updateData)
+
   return response
 }
 
@@ -230,4 +234,154 @@ export async function deleteTestDrive(axios, testDriveId) {
 export async function cancelTestDrive(axios, testDriveId) {
   console.warn('⚠️ cancelTestDrive is deprecated. Use deleteTestDrive instead.')
   return deleteTestDrive(axios, testDriveId)
+}
+
+// ========================================
+// 🆕 Staff APIs
+// ========================================
+
+/**
+ * Get all staffs for the brand
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {object} params - Query parameters (optional)
+ * @returns {Promise<Array>} List of staffs
+ */
+export async function getAllStaffs(axios, params = {}) {
+  const path = buildBrandApiPath('/staffs')
+
+  console.log(`📞 GET ${path}`, params)
+
+  const response = await axios.$get(path, { params })
+  return response
+}
+
+/**
+ * Get staff by ID
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} staffId - Staff ID
+ * @returns {Promise<object>} Staff details
+ */
+export async function getStaffById(axios, staffId) {
+  const path = buildBrandApiPath(`/staffs/${staffId}`)
+
+  console.log(`📞 GET ${path}`)
+
+  const response = await axios.$get(path)
+  return response
+}
+
+// ========================================
+// 🆕 Stock Management APIs
+// ========================================
+
+/**
+ * Update vehicle status
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} vehicleId - Vehicle ID
+ * @param {string} status - New status (e.g., 'available', 'in_use', 'maintenance')
+ * @returns {Promise<object>} Updated vehicle
+ */
+export async function updateVehicleStatus(axios, vehicleId, status) {
+  const path = buildBrandApiPath(`/stock/vehicles/${vehicleId}/status`)
+
+  console.log(`📞 PATCH ${path}`, { status })
+
+  const response = await axios.$patch(path, { status })
+  return response
+}
+
+// ========================================
+// 🆕 Signature Upload with Compression
+// ========================================
+
+/**
+ * Compress base64 image to reduce size (fix 413 error)
+ * @param {string} base64Image - Base64 image string (with data:image/... prefix)
+ * @param {number} maxWidth - Maximum width in pixels (default: 600)
+ * @param {number} quality - JPEG quality 0-1 (default: 0.6)
+ * @returns {Promise<string>} Compressed base64 image
+ */
+export function compressBase64Image(base64Image, maxWidth = 600, quality = 0.6) {
+  return new Promise((resolve, reject) => {
+    // Create image element
+    const img = new Image()
+
+    img.onload = () => {
+      // Calculate new dimensions
+      let width = img.width
+      let height = img.height
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width
+        width = maxWidth
+      }
+
+      // Create canvas
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      // Draw compressed image
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Convert to base64 with compression
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
+
+      console.log('📦 Image compression:', {
+        original: (base64Image.length / 1024).toFixed(2) + ' KB',
+        compressed: (compressedBase64.length / 1024).toFixed(2) + ' KB',
+        reduction: (((base64Image.length - compressedBase64.length) / base64Image.length) * 100).toFixed(1) + '%'
+      })
+
+      resolve(compressedBase64)
+    }
+
+    img.onerror = (error) => {
+      reject(new Error('Failed to load image for compression: ' + error))
+    }
+
+    img.src = base64Image
+  })
+}
+
+/**
+ * Submit PDPA consent for test drive
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} testDriveId - Test drive ID
+ * @param {boolean} consent - Consent value (true/false)
+ * @returns {Promise<object>} Response
+ */
+export async function submitPdpaConsent(axios, testDriveId, consent) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}/pdpa-consent`)
+
+  console.log(`📞 POST ${path}`, { consent })
+
+  const response = await axios.$post(path, { consent })
+  return response
+}
+
+/**
+ * Upload signature with automatic compression
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} testDriveId - Test drive ID
+ * @param {string} signatureData - Base64 signature image
+ * @param {boolean} compress - Auto-compress image (default: true)
+ * @returns {Promise<object>} Upload result
+ */
+export async function uploadSignature(axios, testDriveId, signatureData, compress = true) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}/signature`)
+
+  let finalSignatureData = signatureData
+
+  // Auto-compress if enabled and image is large
+  if (compress && signatureData.length > 100 * 1024) { // > 100KB
+    console.log('🔄 Compressing signature image...')
+    finalSignatureData = await compressBase64Image(signatureData, 600, 0.6)
+  }
+
+  console.log(`📞 POST ${path}`, '(signature upload)')
+
+  const response = await axios.$post(path, { signatureData: finalSignatureData })
+  return response
 }
