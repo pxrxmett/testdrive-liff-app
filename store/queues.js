@@ -1,4 +1,6 @@
 // store/queue.js
+import { getTestDrives, updateTestDrive } from '~/utils/brandApi'
+
 export const state = () => ({
   queues: [],
   loading: false,
@@ -62,12 +64,10 @@ export const actions = {
         throw new Error('ไม่พบข้อมูลพนักงาน กรุณาล็อกอินใหม่')
       }
 
-      // เรียก API โดยส่ง staffCode เพื่อกรองคิว
-      const response = await this.$axios.$get(`/test-drives`, {
-        params: {
-          staffCode,
-          ...state.filters
-        }
+      // ✅ MIGRATED: เรียก API โดยส่ง staffCode เพื่อกรองคิว (brand-scoped)
+      const response = await getTestDrives(this.$axios, {
+        staffCode,
+        ...state.filters
       })
 
       commit('SET_QUEUES', response.data || [])
@@ -84,7 +84,8 @@ export const actions = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
 
-      const response = await this.$axios.$patch(`/test-drives/${id}`, data)
+      // ✅ MIGRATED: ใช้ updateTestDrive helper (brand-scoped) with PATCH method
+      const response = await updateTestDrive(this.$axios, id, data, 'PATCH')
       commit('UPDATE_QUEUE', response.data)
 
       return response.data

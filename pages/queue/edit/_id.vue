@@ -194,6 +194,15 @@
 </template>
 
 <script>
+import {
+  getStaffById,
+  getAvailableVehicles,
+  getTestDriveById,
+  getTestDrives,
+  updateTestDrive,
+  updateVehicleStatus
+} from '~/utils/brandApi'
+
 export default {
   name: 'EditBookingPage',
   
@@ -232,9 +241,10 @@ export default {
     async fetchUserInfo() {
       try {
         const userInfo = this.$store.state.auth?.user;
-        
+
         if (!userInfo) {
-          const response = await this.$axios.$get('/staffs/' + this.$store.state.auth.userId);
+          // ✅ MIGRATED: ใช้ getStaffById helper (brand-scoped)
+          const response = await getStaffById(this.$axios, this.$store.state.auth.userId);
           this.userInfo = {
             name: response.name || `${response.first_name || ''} ${response.last_name || ''}`.trim(),
             branch: response.department || 'สาขาหลัก'
@@ -254,25 +264,19 @@ export default {
     async fetchAllVehicles() {
       try {
         console.log('กำลังดึงข้อมูลรถทั้งหมด...');
-        
-        // ลอง API endpoint ที่ 1: /stock
+
+        // ✅ MIGRATED: ใช้ getAvailableVehicles helper (brand-scoped)
+        // ส่ง params ว่างเพื่อให้ backend ส่งรถทั้งหมด (ไม่กรอง status)
         let response;
         try {
-          console.log('Trying /stock...');
-          response = await this.$axios.$get('/stock');
-          console.log('Response from /stock:', response);
-        } catch (err1) {
-          console.log('Failed /stock, trying /stock/vehicles...');
-          // ลอง API endpoint ที่ 2: /stock/vehicles
-          try {
-            response = await this.$axios.$get('/stock/vehicles');
-            console.log('Response from /stock/vehicles:', response);
-          } catch (err2) {
-            console.error('Both API endpoints failed:', { err1: err1.message, err2: err2.message });
-            throw err2;
-          }
+          console.log('Trying brand-scoped /stock...');
+          response = await getAvailableVehicles(this.$axios, {});
+          console.log('Response from brand-scoped /stock:', response);
+        } catch (err) {
+          console.error('Brand-scoped API failed:', err.message);
+          throw err;
         }
-        
+
         console.log('Final response:', response);
         console.log('Response type:', typeof response);
         console.log('Is array:', Array.isArray(response));
@@ -399,11 +403,12 @@ export default {
     async fetchBookingData() {
       this.loading = true;
       this.error = null;
-      
+
       try {
         const bookingId = this.$route.params.id;
-        const response = await this.$axios.$get(`/test-drives/${bookingId}`);
-        
+        // ✅ MIGRATED: ใช้ getTestDriveById helper (brand-scoped)
+        const response = await getTestDriveById(this.$axios, bookingId);
+
         console.log('ข้อมูลการจองจาก API:', response);
         
         this.originalBookingData = { ...response };
@@ -495,13 +500,12 @@ export default {
       
       try {
         console.log('กำลังตรวจสอบรถที่ว่างในวันที่:', this.bookingData.date);
-        
-        const response = await this.$axios.$get('/test-drives', {
-          params: {
-            date: this.bookingData.date
-          }
+
+        // ✅ MIGRATED: ใช้ getTestDrives helper (brand-scoped)
+        const response = await getTestDrives(this.$axios, {
+          date: this.bookingData.date
         });
-        
+
         console.log('รายการจองในวันที่เลือก:', response);
         
         // ดึงรายการ vehicle_id ที่ถูกจองแล้ว
@@ -646,7 +650,8 @@ export default {
 
         console.log('บันทึกข้อมูลก่อนส่งให้ลูกค้าเซ็น:', apiUpdateData);
 
-        await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
+        // ✅ MIGRATED: ใช้ updateTestDrive helper (brand-scoped) with PATCH
+        await updateTestDrive(this.$axios, bookingId, apiUpdateData, 'PATCH');
 
         // Redirect to signature page
         this.$router.push(`/queue/signature/${bookingId}`);
@@ -698,9 +703,10 @@ export default {
         };
         
         console.log('ข้อมูลที่จะส่งไปอัพเดต:', apiUpdateData);
-        
-        const response = await this.$axios.$patch(`/test-drives/${bookingId}`, apiUpdateData);
-        
+
+        // ✅ MIGRATED: ใช้ updateTestDrive helper (brand-scoped) with PATCH
+        const response = await updateTestDrive(this.$axios, bookingId, apiUpdateData, 'PATCH');
+
         console.log('ผลการอัพเดตข้อมูล:', response);
         
         // อัพเดตสถานะรถ
@@ -728,17 +734,16 @@ export default {
     async updateVehicleStatus() {
       try {
         let vehicleStatus = 'available';
-        
+
         if (this.bookingData.status === 'ongoing') {
           vehicleStatus = 'in_test';
         } else if (this.bookingData.status === 'completed' || this.bookingData.status === 'cancelled') {
           vehicleStatus = 'available';
         }
-        
-        await this.$axios.$patch(`/stock/vehicles/${this.bookingData.vehicleId}/status`, {
-          status: vehicleStatus
-        });
-        
+
+        // ✅ MIGRATED: ใช้ updateVehicleStatus helper (brand-scoped)
+        await updateVehicleStatus(this.$axios, this.bookingData.vehicleId, vehicleStatus);
+
         console.log(`อัพเดตสถานะรถ ${this.bookingData.vehicleId} เป็น ${vehicleStatus}`);
         
       } catch (err) {

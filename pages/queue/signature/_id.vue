@@ -188,6 +188,11 @@
 
 <script>
 import SignaturePad from '~/components/common/SignaturePad.vue'
+import {
+  getTestDriveById,
+  submitPdpaConsent,
+  uploadSignature
+} from '~/utils/brandApi'
 
 export default {
   name: 'SignaturePage',
@@ -233,7 +238,8 @@ export default {
 
       try {
         const bookingId = this.$route.params.id
-        const response = await this.$axios.$get(`/test-drives/${bookingId}`)
+        // ✅ MIGRATED: ใช้ getTestDriveById helper (brand-scoped)
+        const response = await getTestDriveById(this.$axios, bookingId)
 
         console.log('Booking data:', response)
         this.bookingData = response
@@ -272,14 +278,12 @@ export default {
         const bookingId = this.$route.params.id
 
         // 1. บันทึก PDPA consent
-        await this.$axios.$post(`/test-drives/${bookingId}/pdpa-consent`, {
-          consent: true
-        })
+        // ✅ MIGRATED: ใช้ submitPdpaConsent helper (brand-scoped)
+        await submitPdpaConsent(this.$axios, bookingId, true)
 
         // 2. บันทึกลายเซ็น
-        await this.$axios.$post(`/test-drives/${bookingId}/signature`, {
-          signatureData: this.signatureData
-        })
+        // ✅ MIGRATED: ใช้ uploadSignature helper (brand-scoped + AUTO-COMPRESSION!)
+        await uploadSignature(this.$axios, bookingId, this.signatureData)
 
         this.successMessage = 'บันทึกลายเซ็นเรียบร้อยแล้ว!'
 
