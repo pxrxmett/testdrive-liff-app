@@ -167,7 +167,7 @@
 </template>
 
 <script>
-import { deleteTestDrive } from '~/utils/brandApi'
+import { getTestDriveById, deleteTestDrive } from '~/utils/brandApi'
 
 export default {
   name: "QueueDetail",
@@ -201,9 +201,9 @@ export default {
         // รับค่า id จาก URL parameter
         const bookingId = this.$route.params.id;
         console.log('Fetching booking ID:', bookingId);
-        
-        // เรียกใช้ API เพื่อดึงข้อมูลการจอง
-        const response = await this.$axios.$get(`/test-drives/${bookingId}`);
+
+        // ✅ MIGRATED: ใช้ getTestDriveById helper (brand-scoped)
+        const response = await getTestDriveById(this.$axios, bookingId);
         console.log('API Response:', response);
         
         // แปลงข้อมูลจาก API เป็นรูปแบบที่ใช้ในคอมโพเนนท์

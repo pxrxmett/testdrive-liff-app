@@ -384,6 +384,12 @@
 </template>
 
 <script>
+import {
+  getTestDriveById,
+  createTestDrive,
+  updateTestDrive
+} from '~/utils/brandApi'
+
 export default {
   name: 'TestDriveDocumentEdit',
   layout: 'default',
@@ -393,8 +399,8 @@ export default {
     if (this.$route.params.id) {
       this.loading = true
       try {
-        // ดึงข้อมูลเอกสารเดิมจาก API
-        const response = await this.$axios.$get(`/test-drives/${this.$route.params.id}`)
+        // ✅ MIGRATED: ดึงข้อมูลเอกสารเดิมจาก API (brand-scoped)
+        const response = await getTestDriveById(this.$axios, this.$route.params.id)
         if (response) {
           // นำข้อมูลมากรอกในฟอร์ม
           this.populateFormData(response)
@@ -699,14 +705,16 @@ export default {
         const isEdit = !!this.$route.params.id
         
         if (isEdit) {
-          // อัพเดตเอกสาร
-          response = await this.$axios.$patch(
-            `/test-drives/${this.$route.params.id}`,
-            this.formData
+          // ✅ MIGRATED: อัพเดตเอกสาร (brand-scoped)
+          response = await updateTestDrive(
+            this.$axios,
+            this.$route.params.id,
+            this.formData,
+            'PATCH'
           )
         } else {
-          // สร้างเอกสารใหม่
-          response = await this.$axios.$post('/test-drives', this.formData)
+          // ✅ MIGRATED: สร้างเอกสารใหม่ (brand-scoped)
+          response = await createTestDrive(this.$axios, this.formData)
         }
         
         // แสดงข้อความสำเร็จ
