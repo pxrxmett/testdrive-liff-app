@@ -771,6 +771,32 @@ export default {
       const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
       const brandId = brandCode.toUpperCase() === 'BYD' ? 2 : 1;
 
+      // ✅ FIX: ดึง staff ID ที่เป็นตัวเลขจาก store หรือ staffInfo
+      // staffInfo.id อาจเป็น LINE User ID (string) ถ้ายังไม่ได้ check
+      // ให้ดึงจาก store.auth.user.id หรือ store.auth.staffInfo.id ก่อน
+      let responsibleStaffId = this.staffInfo.id;
+
+      // ถ้า staffInfo.id เป็น string (LINE User ID) ให้ดึงจาก store แทน
+      if (typeof responsibleStaffId === 'string' || !responsibleStaffId) {
+        responsibleStaffId = this.$store?.state?.auth?.user?.id ||
+                           this.$store?.state?.auth?.staffInfo?.id ||
+                           this.staffInfo.id;
+      }
+
+      // แปลงเป็น number ให้แน่ใจ
+      responsibleStaffId = parseInt(responsibleStaffId) || null;
+
+      console.log('🔍 Debug prepareBookingData:', {
+        brandCode,
+        brandId,
+        vehicleId,
+        staffInfoId: this.staffInfo.id,
+        responsibleStaffId,
+        staffInfo: this.staffInfo,
+        storeUser: this.$store?.state?.auth?.user,
+        storeStaffInfo: this.$store?.state?.auth?.staffInfo
+      });
+
       // สร้างข้อมูลพื้นฐานสำหรับการจอง
       const bookingData = {
         vehicle_id: vehicleId, // ต้องเป็น integer
@@ -783,7 +809,7 @@ export default {
         test_route: "รอบโชว์รูม", // ตัวอย่างเส้นทาง
         distance: 0, // ค่าเริ่มต้น
         duration: 60, // หน่วยเป็นนาที
-        responsible_staff: this.staffInfo.id, // ✅ ใช้ ID พนักงานที่ login แทน hard-code
+        responsible_staff: responsibleStaffId, // ✅ FIX: ใช้ staff ID ที่เป็น number
         brand_id: brandId // ✅ เพิ่ม brand_id ตาม API spec
       };
       
