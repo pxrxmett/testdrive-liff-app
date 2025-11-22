@@ -754,19 +754,23 @@ export default {
     // ฟังก์ชันรวมสำหรับเตรียมข้อมูลการจองให้ตรงตามรูปแบบที่ API ต้องการ
     prepareBookingData(type) {
       const formData = type === 'phone' ? this.phoneForm : this.walkinForm;
-      
+
       // สร้างวันที่และเวลาในรูปแบบที่ถูกต้อง ISO 8601
       // ตัวอย่าง: '2025-05-17T13:00:00.000Z'
       const startTimeISO = `${formData.date}T${formData.time}:00.000Z`;
-      
+
       // คำนวณเวลาสิ้นสุด (เพิ่ม 1 ชั่วโมง)
       const [startHour, startMinute] = formData.time.split(':').map(Number);
       const endHour = (startHour + 1) % 24;
       const endTimeISO = `${formData.date}T${endHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}:00.000Z`;
-      
+
       // แปลง vehicle_id ให้เป็น integer
       const vehicleId = this.parseVehicleId(formData.carModel);
-      
+
+      // ✅ แปลง brandCode เป็น brand_id (1 = ISUZU, 2 = BYD)
+      const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
+      const brandId = brandCode.toUpperCase() === 'BYD' ? 2 : 1;
+
       // สร้างข้อมูลพื้นฐานสำหรับการจอง
       const bookingData = {
         vehicle_id: vehicleId, // ต้องเป็น integer
@@ -779,7 +783,8 @@ export default {
         test_route: "รอบโชว์รูม", // ตัวอย่างเส้นทาง
         distance: 0, // ค่าเริ่มต้น
         duration: 60, // หน่วยเป็นนาที
-        responsible_staff: this.staffInfo.id // ✅ ใช้ ID พนักงานที่ login แทน hard-code
+        responsible_staff: this.staffInfo.id, // ✅ ใช้ ID พนักงานที่ login แทน hard-code
+        brand_id: brandId // ✅ เพิ่ม brand_id ตาม API spec
       };
       
       // เพิ่มข้อมูลเกี่ยวกับบัตรประชาชน/ใบขับขี่ (สำหรับ walkin)
