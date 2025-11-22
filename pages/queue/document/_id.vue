@@ -385,32 +385,38 @@
 
 <script>
 import {
-  getTestDriveById,
-  createTestDrive,
-  updateTestDrive
+  getTestDriveDocument,
+  createTestDriveDocument,
+  updateTestDriveDocument
 } from '~/utils/brandApi'
 
 export default {
   name: 'TestDriveDocumentEdit',
   layout: 'default',
-  
+
   async fetch() {
     // ถ้าเป็นการแก้ไขเอกสาร (มี ID)
     if (this.$route.params.id) {
       this.loading = true
       try {
-        // ✅ MIGRATED: ดึงข้อมูลเอกสารเดิมจาก API (brand-scoped)
-        const response = await getTestDriveById(this.$axios, this.$route.params.id)
+        // ✅ MIGRATED: ดึงข้อมูลเอกสารจาก Document API (brand-scoped)
+        const response = await getTestDriveDocument(this.$axios, this.$route.params.id)
         if (response) {
           // นำข้อมูลมากรอกในฟอร์ม
           this.populateFormData(response)
         }
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error)
-        this.$nuxt.$emit('showToast', {
-          message: 'ไม่สามารถดึงข้อมูลเอกสารได้ กรุณาลองใหม่อีกครั้ง',
-          type: 'error'
-        })
+
+        // ถ้า 404 แปลว่ายังไม่มีเอกสาร (เป็นปกติสำหรับเอกสารใหม่)
+        if (error.response && error.response.status === 404) {
+          console.log('📄 Document not found - this is normal for new documents')
+        } else {
+          this.$nuxt.$emit('showToast', {
+            message: 'ไม่สามารถดึงข้อมูลเอกสารได้ กรุณาลองใหม่อีกครั้ง',
+            type: 'error'
+          })
+        }
       } finally {
         this.loading = false
       }
@@ -703,20 +709,30 @@ export default {
       try {
         let response
         const isEdit = !!this.$route.params.id
-        
+
         if (isEdit) {
-          // ✅ MIGRATED: อัพเดตเอกสาร (brand-scoped)
-          response = await updateTestDrive(
+          // ✅ MIGRATED: อัพเดตเอกสาร (Document API - brand-scoped)
+          response = await updateTestDriveDocument(
             this.$axios,
             this.$route.params.id,
-            this.formData,
-            'PATCH'
+            this.formData
           )
         } else {
-          // ✅ MIGRATED: สร้างเอกสารใหม่ (brand-scoped)
-          response = await createTestDrive(this.$axios, this.formData)
+          // ✅ MIGRATED: สร้างเอกสารใหม่ (Document API - brand-scoped)
+          response = await createTestDriveDocument(
+            this.$axios,
+            this.$route.params.id,
+            this.formData
+          )
         }
-        
+
+        console.log('📄 Document saved:', response)
+        if (response.pdfUrl) {
+          console.log('📎 PDF URL:', response.pdfUrl)
+        } else {
+          console.log('⏳ PDF is being generated...')
+        }
+
         // แสดงข้อความสำเร็จ
         this.$nuxt.$emit('showToast', {
           message: isEdit ? 'อัพเดตเอกสารเรียบร้อยแล้ว' : 'สร้างเอกสารเรียบร้อยแล้ว',
