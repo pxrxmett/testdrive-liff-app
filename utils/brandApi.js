@@ -393,3 +393,72 @@ export async function uploadSignature(axios, testDriveId, signatureData, compres
   const response = await axios.$post(path, { signatureData: finalSignatureData })
   return response
 }
+
+/**
+ * ==========================================
+ * TEST DRIVE DOCUMENT APIs (Brand-scoped)
+ * ==========================================
+ */
+
+/**
+ * Create test drive document (with PDF generation)
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} testDriveId - Test drive ID
+ * @param {object} documentData - Document data including salesSpecialist, customerName, licenseImage, signatures, etc.
+ * @returns {Promise<object>} Created document with pdfUrl (may be null initially)
+ */
+export async function createTestDriveDocument(axios, testDriveId, documentData) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}/document`)
+
+  console.log(`📞 POST ${path}`, '(create document)')
+
+  const response = await axios.$post(path, documentData)
+  return response
+}
+
+/**
+ * Get test drive document
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} testDriveId - Test drive ID
+ * @returns {Promise<object>} Document data with URLs
+ */
+export async function getTestDriveDocument(axios, testDriveId) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}/document`)
+
+  console.log(`📞 GET ${path}`)
+
+  const response = await axios.$get(path)
+  return response
+}
+
+/**
+ * Update test drive document
+ * @param {object} axios - Axios instance from Nuxt
+ * @param {number|string} testDriveId - Test drive ID
+ * @param {object} documentData - Updated document data
+ * @returns {Promise<object>} Updated document with new pdfUrl
+ */
+export async function updateTestDriveDocument(axios, testDriveId, documentData) {
+  const path = buildBrandApiPath(`/test-drives/${testDriveId}/document`)
+
+  console.log(`📞 PATCH ${path}`, '(update document)')
+
+  const response = await axios.$patch(path, documentData)
+  return response
+}
+
+/**
+ * Get document PDF download URL
+ * @param {number|string} testDriveId - Test drive ID
+ * @returns {string} PDF download URL
+ */
+export function getDocumentPdfDownloadUrl(testDriveId) {
+  const brandCode = getBrandCode()
+  if (!brandCode) {
+    throw new Error('brandCode not found in localStorage')
+  }
+  const normalizedBrandCode = brandCode.toLowerCase()
+
+  // Return relative URL (browser will use current origin)
+  return `/api/${normalizedBrandCode}/test-drives/${testDriveId}/document/download`
+}
