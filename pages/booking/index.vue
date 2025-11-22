@@ -771,6 +771,14 @@ export default {
       const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
       const brandId = brandCode.toUpperCase() === 'BYD' ? 2 : 1;
 
+      console.log('🔍 Debug prepareBookingData:', {
+        brandCode,
+        brandId,
+        vehicleId,
+        staffInfoId: this.staffInfo.id,
+        staffInfo: this.staffInfo
+      });
+
       // สร้างข้อมูลพื้นฐานสำหรับการจอง
       const bookingData = {
         vehicle_id: vehicleId, // ต้องเป็น integer
