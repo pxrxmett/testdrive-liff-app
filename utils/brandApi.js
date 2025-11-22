@@ -29,11 +29,19 @@ export function buildBrandApiPath(endpoint) {
     throw new Error('brandCode not found in localStorage. Please login first.')
   }
 
+  // ✅ FIX: Convert brandCode to lowercase (API expects 'isuzu' not 'ISUZU')
+  const normalizedBrandCode = brandCode.toLowerCase()
+
+  // Validate brandCode
+  if (!['isuzu', 'byd'].includes(normalizedBrandCode)) {
+    console.warn(`⚠️ Invalid brandCode: ${brandCode}. Expected 'isuzu' or 'byd'. Using anyway...`)
+  }
+
   // Remove leading slash from endpoint if exists
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
 
   // ✅ FIX: Don't add /api prefix - axios baseURL already has it
-  return `/${brandCode}/${cleanEndpoint}`
+  return `/${normalizedBrandCode}/${cleanEndpoint}`
 }
 
 /**
