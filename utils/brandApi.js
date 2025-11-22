@@ -255,7 +255,7 @@ export async function cancelTestDrive(axios, testDriveId) {
  * @returns {Promise<Array>} List of staffs
  */
 export async function getAllStaffs(axios, params = {}) {
-  const path = buildBrandApiPath('/staffs')
+  const path = buildBrandApiPath('/staff')  // ✅ FIX: /staff ไม่ใช่ /staffs
 
   console.log(`📞 GET ${path}`, params)
 
@@ -270,7 +270,7 @@ export async function getAllStaffs(axios, params = {}) {
  * @returns {Promise<object>} Staff details
  */
 export async function getStaffById(axios, staffId) {
-  const path = buildBrandApiPath(`/staffs/${staffId}`)
+  const path = buildBrandApiPath(`/staff/${staffId}`)  // ✅ FIX: /staff ไม่ใช่ /staffs
 
   console.log(`📞 GET ${path}`)
 
