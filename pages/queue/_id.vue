@@ -168,6 +168,7 @@
 
 <script>
 import { getTestDriveById, deleteTestDrive } from '~/utils/brandApi'
+import { formatTime as formatTimeUtil } from '~/utils/dateFormatter'
 
 export default {
   name: "QueueDetail",
@@ -213,7 +214,8 @@ export default {
           model: response.vehicle?.vehicleCode || response.vehicleCode || "ไม่ระบุรุ่นรถ",
           modelDescription: response.vehicle?.model || "",
           bookingDate: response.startTime || "",
-          bookingTime: response.startTime ? new Date(response.startTime).toLocaleTimeString('th-TH').slice(0, 5) : "",
+          // ✅ FIX: ใช้ formatTime จาก utils เพื่อให้ timezone ถูกต้อง
+          bookingTime: response.startTime ? formatTimeUtil(response.startTime) : "",
           branch: response.branch?.name || "ไม่ระบุสาขา",
           status: response.status || "pending",
           customerPhone: response.customerPhone || ""
