@@ -327,10 +327,16 @@
         }
       },
       initializeForm() {
-        // ตั้งค่าเวลาปัจจุบัน
-        const now = new Date()
-        this.formData.startTime = now.toTimeString().slice(0, 5)
-  
+        // ✅ FIX: ใช้เวลาที่ลูกค้าจองไว้ แทนเวลาปัจจุบัน
+        if (this.testDriveData.start_time) {
+          const startDate = new Date(this.testDriveData.start_time)
+          this.formData.startTime = startDate.toTimeString().slice(0, 5)
+        } else {
+          // Fallback: ใช้เวลาปัจจุบันถ้าไม่มีข้อมูลการจอง
+          const now = new Date()
+          this.formData.startTime = now.toTimeString().slice(0, 5)
+        }
+
         // ตั้งค่าเริ่มต้นจากข้อมูลการจองหากมี
         if (this.testDriveData.duration) {
           this.formData.duration = this.testDriveData.duration.toString()

@@ -470,10 +470,32 @@ export default {
         console.log('กำลังส่งคำขอ API ด้วย ID พนักงาน:', this.staffInfo.id)
         console.log('Staff Code:', this.staffInfo.staff_code)
 
-        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
-        const response = await getTestDrives(this.$axios)
+        // ✅ FIX: หน้าหลัก - แสดงเฉพาะคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้า
+        const today = new Date()
+        const startDate = new Date(today)
+        startDate.setDate(today.getDate() - 7)
+        const endDate = new Date(today)
+        endDate.setDate(today.getDate() + 7)
 
-        console.log('ข้อมูลคิวที่ได้รับ (ทั้งหมด):', response)
+        const formatDate = (date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+
+        const startDateStr = formatDate(startDate)
+        const endDateStr = formatDate(endDate)
+
+        console.log('📅 Home: แสดงคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้า:', startDateStr, '-', endDateStr)
+
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+        const response = await getTestDrives(this.$axios, {
+          start_date: startDateStr,
+          end_date: endDateStr
+        })
+
+        console.log('ข้อมูลคิวที่ได้รับ (กรองแล้ว):', response)
         
         // Debug: ดูโครงสร้างข้อมูลจริง
         if (response.length > 0) {

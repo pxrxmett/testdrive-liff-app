@@ -432,14 +432,17 @@ export default {
 
         if (document) {
           // ถ้ามีเอกสารแล้ว ให้ overwrite ข้อมูลที่ user เคยกรอก
+          this.hasExistingDocument = true
           this.populateFormData(document)
         }
       } catch (docError) {
         // 404 = ยังไม่มีเอกสาร (ปกติ)
         if (docError.response && docError.response.status === 404) {
           console.log('📄 Document not found - will create new one')
+          this.hasExistingDocument = false
         } else {
           console.error('Error fetching document:', docError)
+          this.hasExistingDocument = false
         }
       }
 
@@ -467,6 +470,7 @@ export default {
     return {
       loading: true,
       isSubmitting: false,
+      hasExistingDocument: false, // Flag to check if document already exists
       currentDate: '',
       currentTime: '',
       timerInterval: null,
@@ -763,27 +767,32 @@ export default {
       if (!this.validateForm()) {
         return
       }
-      
+
       this.isSubmitting = true
-      
+
       try {
         let response
-        const isEdit = !!this.$route.params.id
+        // ✅ FIX: ใช้ hasExistingDocument แทน route params เพื่อตรวจสอบว่าเป็น create หรือ update
+        const isEdit = this.hasExistingDocument
 
         if (isEdit) {
-          // ✅ MIGRATED: อัพเดตเอกสาร (Document API - brand-scoped)
+          // ✅ MIGRATED: อัพเดตเอกสาร (Document API - brand-scoped) - ใช้ PATCH
+          console.log('📝 Updating existing document...')
           response = await updateTestDriveDocument(
             this.$axios,
             this.$route.params.id,
             this.formData
           )
         } else {
-          // ✅ MIGRATED: สร้างเอกสารใหม่ (Document API - brand-scoped)
+          // ✅ MIGRATED: สร้างเอกสารใหม่ (Document API - brand-scoped) - ใช้ POST
+          console.log('📝 Creating new document...')
           response = await createTestDriveDocument(
             this.$axios,
             this.$route.params.id,
             this.formData
           )
+          // Set flag เพื่อให้การ submit ครั้งต่อไปเป็น update
+          this.hasExistingDocument = true
         }
 
         console.log('📄 Document saved:', response)

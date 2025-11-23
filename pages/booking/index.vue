@@ -60,14 +60,25 @@
               <div class="container-7">
                 <div class="div-wrapper">
                   <div class="text-wrapper-6">รุ่นรถที่ต้องการทดสอบ</div>
+                  <div v-if="checkingAvailability" class="availability-checking">
+                    กำลังตรวจสอบความพร้อมของรถ...
+                  </div>
                 </div>
 
                 <select v-model="phoneForm.carModel" class="options">
                   <option value="" class="text-wrapper-7">เลือกรุ่นรถ</option>
-                  <option v-for="car in carModels" :key="car.id" :value="car.id" class="text-wrapper-7">
-                    {{ car.name }}
+                  <option
+                    v-for="car in carModels"
+                    :key="car.id"
+                    :value="car.id"
+                    :disabled="unavailableVehicleIds.includes(car.id)"
+                    class="text-wrapper-7">
+                    {{ car.name }}{{ unavailableVehicleIds.includes(car.id) ? ' (ไม่ว่าง)' : '' }}
                   </option>
                 </select>
+                <div v-if="unavailableVehicleIds.length > 0" class="availability-info">
+                  ⚠️ มีรถ {{ unavailableVehicleIds.length }} คันที่ไม่ว่างในช่วงเวลานี้
+                </div>
               </div>
 
               <div class="container-7">
@@ -162,14 +173,25 @@
               <div class="container-7">
                 <div class="div-wrapper">
                   <div class="text-wrapper-6">รุ่นรถที่ต้องการทดสอบ</div>
+                  <div v-if="checkingAvailability" class="availability-checking">
+                    กำลังตรวจสอบความพร้อมของรถ...
+                  </div>
                 </div>
 
                 <select v-model="walkinForm.carModel" class="options">
                   <option value="" class="text-wrapper-7">เลือกรุ่นรถ</option>
-                  <option v-for="car in carModels" :key="car.id" :value="car.id" class="text-wrapper-7">
-                    {{ car.name }}
+                  <option
+                    v-for="car in carModels"
+                    :key="car.id"
+                    :value="car.id"
+                    :disabled="unavailableVehicleIds.includes(car.id)"
+                    class="text-wrapper-7">
+                    {{ car.name }}{{ unavailableVehicleIds.includes(car.id) ? ' (ไม่ว่าง)' : '' }}
                   </option>
                 </select>
+                <div v-if="unavailableVehicleIds.length > 0" class="availability-info">
+                  ⚠️ มีรถ {{ unavailableVehicleIds.length }} คันที่ไม่ว่างในช่วงเวลานี้
+                </div>
               </div>
 
               <div class="container-7">
@@ -293,7 +315,7 @@
 <script>
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
-import { getAvailableVehicles, createTestDrive } from '~/utils/brandApi'
+import { getAvailableVehicles, createTestDrive, getTestDrives } from '~/utils/brandApi'
 
 export default {
   name: "BookingPage",
@@ -327,6 +349,8 @@ export default {
       isSubmitting: false,
       isDataScanned: false,
       phoneValidationError: false,
+      checkingAvailability: false,
+      unavailableVehicleIds: [], // รถที่ไม่ว่างในช่วงเวลาที่เลือก
       // เวลาทำการ
       businessHours: {
         start: 9, // 9:00
@@ -369,6 +393,32 @@ export default {
       // วันที่ต่ำสุดที่อนุญาตให้จอง - วันนี้
       const today = new Date();
       return today.toISOString().split('T')[0];
+    }
+  },
+  watch: {
+    // ตรวจสอบความพร้อมของรถเมื่อเลือกวันที่ (ฟอร์มโทรศัพท์)
+    'phoneForm.date'(newDate) {
+      if (newDate && this.phoneForm.time) {
+        this.checkVehicleAvailability(newDate, this.phoneForm.time);
+      }
+    },
+    // ตรวจสอบความพร้อมของรถเมื่อเลือกเวลา (ฟอร์มโทรศัพท์)
+    'phoneForm.time'(newTime) {
+      if (newTime && this.phoneForm.date) {
+        this.checkVehicleAvailability(this.phoneForm.date, newTime);
+      }
+    },
+    // ตรวจสอบความพร้อมของรถเมื่อเลือกวันที่ (ฟอร์ม Walk-in)
+    'walkinForm.date'(newDate) {
+      if (newDate && this.walkinForm.time) {
+        this.checkVehicleAvailability(newDate, this.walkinForm.time);
+      }
+    },
+    // ตรวจสอบความพร้อมของรถเมื่อเลือกเวลา (ฟอร์ม Walk-in)
+    'walkinForm.time'(newTime) {
+      if (newTime && this.walkinForm.date) {
+        this.checkVehicleAvailability(this.walkinForm.date, newTime);
+      }
     }
   },
   async created() {
@@ -416,24 +466,97 @@ export default {
     setDefaultTime() {
       const now = new Date();
       const currentHour = now.getHours();
-      
+
       // ค้นหาช่วงเวลาที่ใกล้ที่สุดในเวลาทำการ
       let defaultTimeSlot = this.timeSlots[0]; // เริ่มต้นด้วยช่วงเวลาแรก
-      
+
       // ถ้าเวลาปัจจุบันอยู่ในช่วงเวลาทำการ
       if (currentHour >= this.businessHours.start && currentHour < this.businessHours.end) {
         // เลือกช่วงเวลาถัดไปจากเวลาปัจจุบัน
         const nextHourSlot = `${(currentHour + 1).toString().padStart(2, '0')}:00`;
-        
+
         // ตรวจสอบว่าช่วงเวลาถัดไปยังอยู่ในเวลาทำการหรือไม่
         if (currentHour + 1 < this.businessHours.end) {
           defaultTimeSlot = nextHourSlot;
         }
       }
-      
+
       // กำหนดค่าเริ่มต้นสำหรับเวลา
       this.phoneForm.time = defaultTimeSlot;
       this.walkinForm.time = defaultTimeSlot;
+    },
+
+    // ตรวจสอบความพร้อมของรถในช่วงเวลาที่เลือก
+    async checkVehicleAvailability(date, time) {
+      try {
+        this.checkingAvailability = true;
+
+        // สร้างช่วงเวลาที่ต้องการตรวจสอบ
+        const [hour, minute] = time.split(':').map(Number);
+        const selectedStartTime = new Date(`${date}T${time}:00.000Z`);
+        const selectedEndTime = new Date(selectedStartTime);
+        selectedEndTime.setHours(selectedEndTime.getHours() + 1); // เพิ่ม 1 ชั่วโมง
+
+        console.log('🔍 Checking vehicle availability for:', {
+          date,
+          time,
+          startTime: selectedStartTime.toISOString(),
+          endTime: selectedEndTime.toISOString()
+        });
+
+        // ดึงรายการจองทั้งหมดในวันที่เลือก
+        const bookings = await getTestDrives(this.$axios, {
+          start_date: date,
+          end_date: date,
+          status: 'PENDING,ONGOING' // เฉพาะรายการที่ยังไม่เสร็จสิ้น
+        });
+
+        console.log('📋 Found bookings:', bookings.length);
+
+        // หารถที่ไม่ว่างในช่วงเวลาที่เลือก
+        const unavailableIds = new Set();
+
+        bookings.forEach(booking => {
+          if (!booking.start_time || !booking.vehicle_id) return;
+
+          // แปลงเวลาจองเป็น Date object
+          const bookingStart = new Date(booking.start_time);
+          const bookingEnd = booking.expected_end_time
+            ? new Date(booking.expected_end_time)
+            : new Date(bookingStart.getTime() + 60 * 60 * 1000); // default +1 hour
+
+          // ตรวจสอบว่าช่วงเวลาทับซ้อนกันหรือไม่
+          const isOverlapping = (
+            (selectedStartTime >= bookingStart && selectedStartTime < bookingEnd) || // เริ่มในช่วงที่มีการจอง
+            (selectedEndTime > bookingStart && selectedEndTime <= bookingEnd) ||     // สิ้นสุดในช่วงที่มีการจอง
+            (selectedStartTime <= bookingStart && selectedEndTime >= bookingEnd)     // ครอบคลุมช่วงที่มีการจอง
+          );
+
+          if (isOverlapping) {
+            unavailableIds.add(booking.vehicle_id);
+            console.log('❌ Vehicle unavailable:', {
+              vehicleId: booking.vehicle_id,
+              bookingTime: `${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`,
+              customerName: booking.customer_name || booking.customerName
+            });
+          }
+        });
+
+        // อัพเดทรายการรถที่ไม่ว่าง
+        this.unavailableVehicleIds = Array.from(unavailableIds);
+
+        console.log('✅ Availability check complete:', {
+          unavailableVehicles: this.unavailableVehicleIds.length,
+          vehicleIds: this.unavailableVehicleIds
+        });
+
+      } catch (error) {
+        console.error('Error checking vehicle availability:', error);
+        // ไม่แสดง error ให้ user เพื่อไม่ให้รบกวนประสบการณ์การใช้งาน
+        this.unavailableVehicleIds = [];
+      } finally {
+        this.checkingAvailability = false;
+      }
     },
     
     // ฟังก์ชันสำหรับตั้งค่าแท็บที่เลือก
@@ -1041,18 +1164,31 @@ export default {
    validatePhoneForm() {
      // รีเซ็ตสถานะข้อผิดพลาด
      this.phoneValidationError = false;
-     
+
      // ตรวจสอบว่ามีการกรอกข้อมูลครบถ้วนหรือไม่
      if (!this.phoneForm.carModel || !this.phoneForm.date || !this.phoneForm.time || !this.phoneForm.customerName || !this.phoneForm.phone) {
        return false;
      }
-     
+
      // ตรวจสอบรูปแบบเบอร์โทรศัพท์
      if (!this.validatePhone(this.phoneForm.phone)) {
        this.phoneValidationError = true;
        return false;
      }
-     
+
+     // ✅ ตรวจสอบว่ารถที่เลือกไม่ว่างในช่วงเวลาที่เลือก
+     if (this.unavailableVehicleIds.includes(this.phoneForm.carModel)) {
+       if (this.$store && this.$store.state.notifications) {
+         this.$store.dispatch('notifications/add', {
+           type: 'error',
+           message: 'รถที่เลือกไม่ว่างในช่วงเวลานี้ กรุณาเลือกรถคันอื่นหรือเปลี่ยนเวลา'
+         });
+       } else {
+         alert('รถที่เลือกไม่ว่างในช่วงเวลานี้ กรุณาเลือกรถคันอื่นหรือเปลี่ยนเวลา');
+       }
+       return false;
+     }
+
      return true;
    },
    
@@ -1701,6 +1837,32 @@ export default {
   width: 14px;
   height: 14px;
   stroke: currentColor;
+}
+
+/* Vehicle Availability Indicators */
+.availability-checking {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Prompt', sans-serif;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.availability-info {
+  font-size: 12px;
+  color: #dc2626;
+  font-family: 'Prompt', sans-serif;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background-color: #fef2f2;
+  border-radius: 4px;
+  border-left: 3px solid #dc2626;
+}
+
+/* Style for disabled options */
+.options option:disabled {
+  color: #999;
+  background-color: #f5f5f5;
 }
 
 /* Loading Overlay */

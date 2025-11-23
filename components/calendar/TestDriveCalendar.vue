@@ -644,18 +644,25 @@ export default {
       this.error = null;
 
       try {
-        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
+        // ✅ หน้าปฏิทิน: แสดงทุกคิว ไม่มีการกรอง
         const response = await getTestDrives(this.$axios);
 
         if (response && Array.isArray(response)) {
-          this.bookings = this.formatBookingData(response);
-          console.log('โหลดข้อมูลการจองเรียบร้อย:', this.bookings.length, 'รายการ');
+          // ✅ เรียงคิวล่าสุดบนสุด (ตาม created_at DESC)
+          const sortedBookings = response.sort((a, b) => {
+            const dateA = new Date(a.created_at || a.createdAt || a.start_time)
+            const dateB = new Date(b.created_at || b.createdAt || b.start_time)
+            return dateB - dateA  // DESC: ใหม่สุดก่อน
+          })
+
+          this.bookings = this.formatBookingData(sortedBookings);
+          console.log('📅 Calendar: แสดงทุกคิว:', this.bookings.length, 'รายการ');
         } else {
           // ถ้าไม่มีข้อมูลหรือข้อมูลไม่ใช่ array
           console.log('ไม่มีข้อมูลการจองหรือข้อมูลไม่ถูกต้อง:', response);
           this.bookings = [];
         }
-        
+
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลการจอง:', error);
         
