@@ -520,27 +520,55 @@ export default {
     
     // แปลงข้อมูลจาก API เป็นรูปแบบที่ใช้ในแอป
     formatBookingData(apiData) {
-      return apiData.map(item => {
-        // แปลงข้อมูลตาม API structure ที่ให้มา
-        return {
+      console.log('🔍 Formatting', apiData.length, 'bookings. Sample:', apiData[0])
+
+      return apiData.map((item, index) => {
+        // Debug: ตรวจสอบ field names
+        if (index === 0) {
+          console.log('📋 API fields:', Object.keys(item))
+        }
+
+        // รองรับทั้ง snake_case และ camelCase
+        const formatted = {
           id: item.id,
-          vehicleId: item.vehicle_id,
-          status: item.status,
-          customerName: item.customer_name,
-          customerPhone: item.customer_phone,
-          testRoute: item.test_route,
-          distance: item.distance,
-          duration: item.duration,
-          startTime: item.start_time,
-          expectedEndTime: item.expected_end_time,
-          actualEndTime: item.actual_end_time,
-          responsibleStaff: this.getStaffName(item.responsible_staff),
-          responsibleStaffId: item.responsible_staff,
-          createdAt: item.created_at,
-          updatedAt: item.updated_at,
-          // ดึงข้อมูลรถจาก vehicle_id (ต้องมี API แยก)
-          vehicleModel: item.vehicle?.model || 'ไม่ระบุรุ่น'
-        };
+          vehicleId: item.vehicle_id || item.vehicleId,
+          status: (item.status || 'PENDING').toUpperCase(),
+          // ชื่อลูกค้า - รองรับหลาย format
+          customerName: item.customer_name || item.customerName || 'ไม่ระบุชื่อ',
+          customerPhone: item.customer_phone || item.customerPhone || '',
+          testRoute: item.test_route || item.testRoute || '',
+          distance: item.distance || 0,
+          duration: item.duration || 60,
+          // เวลา - สำคัญมาก!
+          startTime: item.start_time || item.startTime,
+          expectedEndTime: item.expected_end_time || item.expectedEndTime,
+          actualEndTime: item.actual_end_time || item.actualEndTime,
+          responsibleStaff: this.getStaffName(item.responsible_staff || item.responsibleStaff),
+          responsibleStaffId: item.responsible_staff || item.responsibleStaff,
+          createdAt: item.created_at || item.createdAt,
+          updatedAt: item.updated_at || item.updatedAt,
+          // ข้อมูลรถ
+          vehicleModel: item.vehicle?.model || item.vehicleModel || 'ไม่ระบุรุ่น'
+        }
+
+        // Debug: ตรวจสอบข้อมูลที่ format แล้ว
+        if (!formatted.startTime) {
+          console.warn('⚠️ Booking', formatted.id, 'missing startTime!')
+        }
+        if (!formatted.customerName || formatted.customerName === 'ไม่ระบุชื่อ') {
+          console.warn('⚠️ Booking', formatted.id, 'missing customerName!')
+        }
+
+        // Debug: แสดง date grouping
+        if (index < 3) {
+          console.log(`📅 Booking ${formatted.id}:`, {
+            customer: formatted.customerName,
+            startTime: formatted.startTime,
+            date: formatted.startTime ? dayjs(formatted.startTime).format('YYYY-MM-DD HH:mm') : 'NO DATE'
+          })
+        }
+
+        return formatted
       });
     },
     
