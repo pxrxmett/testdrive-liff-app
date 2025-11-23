@@ -385,6 +385,7 @@
 
 <script>
 import {
+  getTestDriveById,
   getTestDriveDocument,
   createTestDriveDocument,
   updateTestDriveDocument
@@ -395,52 +396,70 @@ export default {
   layout: 'default',
 
   async fetch() {
-    // ถ้าเป็นการแก้ไขเอกสาร (มี ID)
-    if (this.$route.params.id) {
-      this.loading = true
-      try {
-        // ✅ MIGRATED: ดึงข้อมูลเอกสารจาก Document API (brand-scoped)
-        const response = await getTestDriveDocument(this.$axios, this.$route.params.id)
-        if (response) {
-          // นำข้อมูลมากรอกในฟอร์ม
-          this.populateFormData(response)
-        }
-      } catch (error) {
-        console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error)
+    if (!this.$route.params.id) {
+      // ไม่มี ID - ไม่ควรเข้าหน้านี้โดยตรง
+      this.$router.push('/queue')
+      return
+    }
 
-        // ถ้า 404 แปลว่ายังไม่มีเอกสาร (เป็นปกติสำหรับเอกสารใหม่)
-        if (error.response && error.response.status === 404) {
-          console.log('📄 Document not found - this is normal for new documents')
+    this.loading = true
+
+    try {
+      const testDriveId = this.$route.params.id
+
+      // 1. ดึงข้อมูล Test Drive ก่อน
+      const testDrive = await getTestDriveById(this.$axios, testDriveId)
+      console.log('📋 Test Drive data:', testDrive)
+
+      // 2. ⚠️ เช็ค PDPA Consent - ถ้ายังไม่ได้เซ็น PDPA ให้ไปหน้า signature ก่อน
+      if (!testDrive.pdpaConsent) {
+        console.log('⚠️ PDPA consent not found - redirecting to signature page')
+        this.$nuxt.$emit('showToast', {
+          message: 'กรุณายอมรับนโยบาย PDPA และเซ็นชื่อก่อน',
+          type: 'warning'
+        })
+        this.$router.push(`/queue/signature/${testDriveId}`)
+        return
+      }
+
+      // 3. Pre-fill ข้อมูลจาก Test Drive
+      this.preFillFromTestDrive(testDrive)
+
+      // 4. ลองดึงข้อมูล Document (ถ้ามี)
+      try {
+        const document = await getTestDriveDocument(this.$axios, testDriveId)
+        console.log('📄 Document data:', document)
+
+        if (document) {
+          // ถ้ามีเอกสารแล้ว ให้ overwrite ข้อมูลที่ user เคยกรอก
+          this.populateFormData(document)
+        }
+      } catch (docError) {
+        // 404 = ยังไม่มีเอกสาร (ปกติ)
+        if (docError.response && docError.response.status === 404) {
+          console.log('📄 Document not found - will create new one')
         } else {
-          this.$nuxt.$emit('showToast', {
-            message: 'ไม่สามารถดึงข้อมูลเอกสารได้ กรุณาลองใหม่อีกครั้ง',
-            type: 'error'
-          })
+          console.error('Error fetching document:', docError)
         }
-      } finally {
-        this.loading = false
       }
-    } else {
-      // กรณีสร้างเอกสารใหม่
+
+      // 5. ดึงข้อมูลพนักงานขาย (ถ้ายังไม่มี)
+      if (!this.formData.salesSpecialist) {
+        const user = this.$store.state.auth.user
+        if (user) {
+          this.formData.salesSpecialist = user.name || user.displayName || ''
+          this.formData.tel = user.phone || user.tel || ''
+        }
+      }
+
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error)
+      this.$nuxt.$emit('showToast', {
+        message: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+        type: 'error'
+      })
+    } finally {
       this.loading = false
-      
-      // ถ้ามีข้อมูลใน store (จากหน้าจอง) ให้ดึงมากรอก
-      if (this.$store.state.booking && this.$store.state.booking.currentBooking) {
-        const bookingData = this.$store.state.booking.currentBooking
-        this.formData.customerName = bookingData.name || ''
-        this.formData.customerTel = bookingData.phone || ''
-        this.formData.vehicleBrand = bookingData.brand || 'isuzu'
-        this.formData.model = bookingData.model || ''
-      }
-      
-      // ดึงข้อมูลผู้ใช้ปัจจุบัน (พนักงานขาย) ถ้ามี
-      if (this.$store.state.auth && this.$store.state.auth.user) {
-        const userData = this.$store.state.auth.user
-        if (userData.role === 'sales') {
-          this.formData.salesSpecialist = userData.name || ''
-          this.formData.tel = userData.phone || ''
-        }
-      }
     }
   },
   
@@ -656,15 +675,56 @@ export default {
       }
     },
     
+    preFillFromTestDrive(testDrive) {
+      // Pre-fill ข้อมูลจาก Test Drive ให้เซลไม่ต้องพิมพ์ใหม่
+      console.log('🔄 Pre-filling form from test drive...')
+
+      // ข้อมูลลูกค้า
+      this.formData.customerName = testDrive.customerName || testDrive.customer_name || ''
+      this.formData.customerTel = testDrive.customerPhone || testDrive.customer_phone || ''
+      this.formData.idNumber = testDrive.customerIdNumber || testDrive.customer_id_number || ''
+
+      // ข้อมูลรถ
+      if (testDrive.vehicle) {
+        this.formData.vehicleBrand = testDrive.vehicle.brand?.toLowerCase() || 'isuzu'
+        this.formData.model = testDrive.vehicle.model || ''
+        this.formData.type = testDrive.vehicle.type || ''
+        this.formData.color = testDrive.vehicle.color || ''
+        this.formData.vinNumber = testDrive.vehicle.vinNumber || testDrive.vehicle.vin_number || ''
+      }
+
+      // วันที่ทดลองขับ
+      if (testDrive.startTime || testDrive.start_time) {
+        const startDate = new Date(testDrive.startTime || testDrive.start_time)
+        this.formData.startDate = startDate.toISOString().split('T')[0]
+      }
+
+      if (testDrive.expectedEndTime || testDrive.expected_end_time) {
+        const endDate = new Date(testDrive.expectedEndTime || testDrive.expected_end_time)
+        this.formData.endDate = endDate.toISOString().split('T')[0]
+      }
+
+      // พนักงานที่รับผิดชอบ
+      if (testDrive.responsibleStaff || testDrive.responsible_staff) {
+        const staff = testDrive.responsibleStaff || testDrive.responsible_staff
+        if (typeof staff === 'object') {
+          this.formData.salesSpecialist = staff.name || staff.staffName || ''
+          this.formData.tel = staff.phone || staff.tel || ''
+        }
+      }
+
+      console.log('✅ Form pre-filled:', this.formData)
+    },
+
     populateFormData(data) {
-      // กรอกข้อมูลจาก API เข้าสู่ฟอร์ม
+      // กรอกข้อมูลจาก Document API เข้าสู่ฟอร์ม
       const simpleFields = [
         'salesSpecialist', 'tel', 'customerName', 'idNumber', 'customerTel',
         'houseNo', 'village', 'district', 'province', 'purpose', 'vehicleBrand',
         'model', 'type', 'color', 'vinNumber', 'startMileage', 'endMileage',
         'startDate', 'endDate', 'licenseImage'
       ]
-      
+
       // กรอกฟิลด์พื้นฐาน
       simpleFields.forEach(field => {
         if (data[field] !== undefined) {
