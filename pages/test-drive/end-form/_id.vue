@@ -454,9 +454,15 @@
         }
       },
       initializeForm() {
-        // ตั้งค่าเวลาปัจจุบัน
-        const now = new Date()
-        this.formData.endTime = now.toTimeString().slice(0, 5)
+        // ✅ FIX: ใช้เวลาที่คาดว่าจะจบการทดลองขับ (expected_end_time) ที่ลูกค้าจองไว้
+        if (this.testDriveData.expected_end_time) {
+          const endDate = new Date(this.testDriveData.expected_end_time)
+          this.formData.endTime = endDate.toTimeString().slice(0, 5)
+        } else {
+          // Fallback: ใช้เวลาปัจจุบันถ้าไม่มีข้อมูล
+          const now = new Date()
+          this.formData.endTime = now.toTimeString().slice(0, 5)
+        }
       },
       formatTime(time) {
         if (!time) return ''
