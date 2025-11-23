@@ -448,7 +448,8 @@
         } catch (error) {
           console.error('Error loading data:', error)
           this.$toast?.error('ไม่สามารถโหลดข้อมูลได้')
-          this.$router.push('/queue')
+          // ✅ FIX: Redirect กลับหน้าหลักแทน (ไม่ใช่ /queue ที่ไม่มี index)
+          this.$router.push('/')
         } finally {
           this.isLoading = false
         }
