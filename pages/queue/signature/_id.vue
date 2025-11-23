@@ -287,8 +287,15 @@ export default {
         console.log('✅ PDPA Response:', pdpaResponse)
 
         if (pdpaResponse.pdfUrl) {
-          console.log('📎 PDPA PDF URL:', pdpaResponse.pdfUrl)
-          console.log('🔗 ดูเอกสาร PDPA:', pdpaResponse.pdfUrl)
+          console.log('📎 PDPA PDF URL (Original):', pdpaResponse.pdfUrl)
+
+          // ✅ แก้ไข localhost URL เป็น production URL
+          const fixedPdpaUrl = pdpaResponse.pdfUrl.replace(
+            'http://localhost:3000',
+            'https://isuzustock-management-production.up.railway.app'
+          )
+          console.log('%c🔗 ดูเอกสาร PDPA (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c' + fixedPdpaUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
         }
 
         // 2. บันทึกลายเซ็น
@@ -298,7 +305,15 @@ export default {
         console.log('✅ Signature Response:', signatureResponse)
 
         if (signatureResponse.signatureUrl) {
-          console.log('📎 Signature URL:', signatureResponse.signatureUrl)
+          console.log('📎 Signature URL (Original):', signatureResponse.signatureUrl)
+
+          // ✅ แก้ไข localhost URL เป็น production URL
+          const fixedSignatureUrl = signatureResponse.signatureUrl.replace(
+            'http://localhost:3000',
+            'https://isuzustock-management-production.up.railway.app'
+          )
+          console.log('%c🔗 ดูรูปลายเซ็น (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c' + fixedSignatureUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
         }
 
         console.log('=== ✅ บันทึก PDPA และลายเซ็นสำเร็จ ===')
