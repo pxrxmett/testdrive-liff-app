@@ -644,18 +644,37 @@ export default {
       this.error = null;
 
       try {
+        // ✅ FIX: กรองคิวตามช่วงเวลา
+        // แสดงคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้า
+        const today = dayjs()
+        const startDate = today.subtract(7, 'day').format('YYYY-MM-DD')
+        const endDate = today.add(7, 'day').format('YYYY-MM-DD')
+
+        console.log('📅 Fetching bookings from', startDate, 'to', endDate)
+
         // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
-        const response = await getTestDrives(this.$axios);
+        const response = await getTestDrives(this.$axios, {
+          start_date: startDate,
+          end_date: endDate
+        });
 
         if (response && Array.isArray(response)) {
-          this.bookings = this.formatBookingData(response);
+          // ✅ FIX: เรียงคิวล่าสุดบนสุด (ตาม created_at DESC)
+          const sortedBookings = response.sort((a, b) => {
+            const dateA = new Date(a.created_at || a.createdAt || a.start_time)
+            const dateB = new Date(b.created_at || b.createdAt || b.start_time)
+            return dateB - dateA  // DESC: ใหม่สุดก่อน
+          })
+
+          this.bookings = this.formatBookingData(sortedBookings);
           console.log('โหลดข้อมูลการจองเรียบร้อย:', this.bookings.length, 'รายการ');
+          console.log('📊 Date range:', startDate, '-', endDate)
         } else {
           // ถ้าไม่มีข้อมูลหรือข้อมูลไม่ใช่ array
           console.log('ไม่มีข้อมูลการจองหรือข้อมูลไม่ถูกต้อง:', response);
           this.bookings = [];
         }
-        
+
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลการจอง:', error);
         
