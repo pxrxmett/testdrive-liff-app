@@ -249,6 +249,14 @@ export default {
         }
 
         console.log('Processed booking data:', this.booking);
+
+        // ✅ AUTO-REDIRECT: ถ้าเซ็นเอกสารครบแล้ว → ไปหน้า start-form เลย
+        if (this.booking.hasPdpaConsent && this.booking.hasDocument) {
+          console.log('🚗 เซ็นเอกสารครบแล้ว - Auto redirect ไปหน้า start-form');
+          setTimeout(() => {
+            this.$router.replace(`/test-drive/start-form/${bookingId}`);
+          }, 500); // รอ 0.5 วินาทีให้โหลดข้อมูลเสร็จก่อน
+        }
       } catch (error) {
         console.error("Error fetching booking details:", error);
         this.error = "ไม่สามารถดึงข้อมูลการจองได้ กรุณาลองใหม่อีกครั้ง";
