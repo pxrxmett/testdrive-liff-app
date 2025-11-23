@@ -808,9 +808,9 @@ export default {
           type: 'success'
         })
 
-        // ✅ Redirect กลับไปหน้ารายการคิว
+        // ✅ FIX: Redirect กลับไปหน้ารายละเอียดคิวแทน (ไม่ใช่ /queue ที่ไม่มี index)
         setTimeout(() => {
-          this.$router.push('/queue')
+          this.$router.push(`/queue/${this.$route.params.id}`)
         }, 1500)
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error)

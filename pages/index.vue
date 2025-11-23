@@ -214,6 +214,7 @@ export default {
       searchTerm: '',
       showStatusUpdateModal: false,
       selectedQueue: null,
+      allQueuesData: [], // ✅ เก็บข้อมูลคิวทั้งหมด (ไม่จำกัด date)
       queueData: [],
       filteredQueues: [],
       carModels: ['D-MAX', 'MU-X', 'BYD DOLPHIN'], // เพิ่มรุ่นรถ BYD จากข้อมูล API
@@ -450,7 +451,7 @@ export default {
         // ตรวจสอบข้อมูลที่จำเป็น
         if (!this.staffInfo?.id) {
           console.error('ไม่พบข้อมูล ID พนักงาน:', this.staffInfo)
-          
+
           // ลองดึงข้อมูลจาก store อีกครั้ง
           const userInfo = this.$store.state.auth?.user
           if (userInfo?.id) {
@@ -470,33 +471,14 @@ export default {
         console.log('กำลังส่งคำขอ API ด้วย ID พนักงาน:', this.staffInfo.id)
         console.log('Staff Code:', this.staffInfo.staff_code)
 
-        // ✅ FIX: หน้าหลัก - แสดงเฉพาะคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้า
-        const today = new Date()
-        const startDate = new Date(today)
-        startDate.setDate(today.getDate() - 7)
-        const endDate = new Date(today)
-        endDate.setDate(today.getDate() + 7)
+        // ✅ FIX: ดึงข้อมูลคิวทั้งหมด (ไม่จำกัด date range) เพื่อให้ค้นหาได้ทุกคิว
+        console.log('📅 Home: ดึงข้อมูลคิวทั้งหมดเพื่อรองรับการค้นหา')
 
-        const formatDate = (date) => {
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          return `${year}-${month}-${day}`
-        }
+        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง (ไม่ส่ง date parameters)
+        const response = await getTestDrives(this.$axios)
 
-        const startDateStr = formatDate(startDate)
-        const endDateStr = formatDate(endDate)
+        console.log('ข้อมูลคิวที่ได้รับ (ทั้งหมด):', response)
 
-        console.log('📅 Home: แสดงคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้า:', startDateStr, '-', endDateStr)
-
-        // ✅ ใช้ brandApi helper แทนการเรียก API โดยตรง
-        const response = await getTestDrives(this.$axios, {
-          start_date: startDateStr,
-          end_date: endDateStr
-        })
-
-        console.log('ข้อมูลคิวที่ได้รับ (กรองแล้ว):', response)
-        
         // Debug: ดูโครงสร้างข้อมูลจริง
         if (response.length > 0) {
           console.log('ตัวอย่างข้อมูลคิวแรก (ทั้งหมด):', JSON.stringify(response[0], null, 2))
@@ -507,7 +489,7 @@ export default {
           console.error('ข้อมูลไม่ถูกต้อง:', response)
           throw new Error('ข้อมูลที่ได้รับไม่ถูกต้อง ไม่ใช่ array')
         }
-        
+
         // กรองเฉพาะคิวของพนักงานที่ล็อกอิน
         // หมายเหตุ: API ปัจจุบันไม่มี responsible_staff ID จึงแสดงทุกคิวชั่วคราว
         console.log('⚠️ API ไม่มี responsible_staff field - แสดงทุกคิวชั่วคราว')
@@ -516,23 +498,23 @@ export default {
           staff_code: this.staffInfo.staff_code,
           name: this.staffInfo.name
         })
-        
+
         // ชั่วคราว: กรองตาม staff_name ถ้ามี (หรือแสดงทุกคิวถ้าไม่มี)
         const filteredByStaff = response.filter(item => {
           // ถ้า staff_name มีค่าและตรงกับชื่อพนักงาน
           if (item.staff_name && this.staffInfo.name) {
             const isMatch = item.staff_name.toLowerCase().includes(this.staffInfo.name.toLowerCase()) ||
                            this.staffInfo.name.toLowerCase().includes(item.staff_name.toLowerCase())
-            
+
             console.log('ตรวจสอบ Queue ID:', item.id, 'Staff Name:', item.staff_name, 'vs ชื่อพนักงาน:', this.staffInfo.name, 'Match:', isMatch)
             return isMatch
           }
-          
+
           // ถ้าไม่มี staff_name หรือเป็น null ให้แสดงทุกคิว (เพื่อให้เห็นข้อมูล)
           console.log('Queue ID:', item.id, 'ไม่มี staff_name - รวมไว้ในรายการ')
           return true
         })
-        
+
         // แจ้งเตือนเกี่ยวกับปัญหา API
         if (filteredByStaff.length === response.length) {
           console.log('🚨 แสดงทุกคิวเพราะ API ไม่มี responsible_staff field')
@@ -543,31 +525,41 @@ export default {
         } else {
           console.log('กรองแล้ว - คิวทั้งหมด:', response.length, 'คิวของพนักงานนี้:', filteredByStaff.length)
         }
-        
-        // แปลงข้อมูล
-        this.queueData = this.formatAPIData(filteredByStaff)
-        
-        // เรียงลำดับตามวันที่และเวลา
-        this.queueData.sort((a, b) => {
-          if (!a.rawDate && !b.rawDate) return 0
-          if (!a.rawDate) return 1
-          if (!b.rawDate) return -1
-          
-          const dateComparison = new Date(a.rawDate) - new Date(b.rawDate)
-          if (dateComparison !== 0) return dateComparison
-          
-          const timeA = a.time || ''
-          const timeB = b.time || ''
-          return timeA.localeCompare(timeB)
+
+        // ✅ แปลงข้อมูลและเก็บไว้ใน allQueuesData (ข้อมูลทั้งหมด)
+        this.allQueuesData = this.formatAPIData(filteredByStaff)
+
+        // ✅ เรียงลำดับตาม created_at DESC (ใหม่ล่าสุดบนสุด)
+        this.allQueuesData.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.rawDate)
+          const dateB = new Date(b.createdAt || b.rawDate)
+          return dateB - dateA  // DESC: newest first
         })
-        
+
+        // ✅ กรองเฉพาะคิว 7 วันย้อนหลัง ถึง 7 วันข้างหน้าเป็นค่าเริ่มต้น
+        const today = new Date()
+        const startDate = new Date(today)
+        startDate.setDate(today.getDate() - 7)
+        startDate.setHours(0, 0, 0, 0)
+
+        const endDate = new Date(today)
+        endDate.setDate(today.getDate() + 7)
+        endDate.setHours(23, 59, 59, 999)
+
+        this.queueData = this.allQueuesData.filter(queue => {
+          if (!queue.rawDate) return true // ถ้าไม่มีวันที่ให้แสดง
+          const queueDate = new Date(queue.rawDate)
+          return queueDate >= startDate && queueDate <= endDate
+        })
+
+        console.log('📅 คิวทั้งหมด:', this.allQueuesData.length, 'รายการ')
+        console.log('📅 คิว 7 วันย้อนหลัง-7 วันข้างหน้า:', this.queueData.length, 'รายการ')
+
         // กำหนดข้อมูลที่จะแสดง
         this.filteredQueues = [...this.queueData]
-        
-        console.log('จำนวนคิวของพนักงานนี้:', this.queueData.length)
-        
+
         // แจ้งเตือนถ้าไม่มีคิว
-        if (this.queueData.length === 0) {
+        if (this.allQueuesData.length === 0) {
           console.log('ไม่พบคิวสำหรับพนักงานรหัส:', this.staffInfo.staff_code)
           this.$store.dispatch('notifications/add', {
             type: 'info',
@@ -576,7 +568,7 @@ export default {
         } else {
           this.$store.dispatch('notifications/add', {
             type: 'info',
-            message: `พบคิว ${this.queueData.length} รายการ${filteredByStaff.length === response.length ? ' (ทั้งหมด - ยังไม่กรองตามพนักงาน)' : ''}`
+            message: `พบคิว ${this.queueData.length} รายการ (ทั้งหมด ${this.allQueuesData.length} รายการ)`
           })
         }
         
@@ -686,22 +678,37 @@ export default {
     },
     
     filterQueues() {
-      this.filteredQueues = this.queueData.filter(queue => {
+      // ✅ ถ้ามีการค้นหา ให้ค้นหาจาก allQueuesData ทั้งหมด
+      // ✅ ถ้าไม่มีการค้นหา ให้แสดงเฉพาะคิว 7 วัน
+      const hasSearch = this.searchTerm !== '' || this.selectedModel !== '' || this.selectedStatus !== ''
+      const sourceData = hasSearch ? this.allQueuesData : this.queueData
+
+      console.log('🔍 Filter:', {
+        hasSearch,
+        searchTerm: this.searchTerm,
+        selectedModel: this.selectedModel,
+        selectedStatus: this.selectedStatus,
+        sourceDataLength: sourceData.length
+      })
+
+      this.filteredQueues = sourceData.filter(queue => {
         // กรองตามคำค้นหา (ชื่อลูกค้า, รุ่นรถ, เบอร์โทร)
         const searchTermLower = this.searchTerm.toLowerCase()
-        const matchesSearch = this.searchTerm === '' || 
+        const matchesSearch = this.searchTerm === '' ||
                (queue.name && queue.name.toLowerCase().includes(searchTermLower)) ||
                (queue.model && queue.model.toLowerCase().includes(searchTermLower)) ||
                (queue.phone && queue.phone.includes(searchTermLower))
-        
+
         // กรองตามรุ่นรถ
         const matchesModel = this.selectedModel === '' || queue.model === this.selectedModel
-        
+
         // กรองตามสถานะ
         const matchesStatus = this.selectedStatus === '' || queue.status === this.selectedStatus
-        
+
         return matchesSearch && matchesModel && matchesStatus
       })
+
+      console.log('✅ Filtered result:', this.filteredQueues.length, 'รายการ')
     },
     
    updateStatus(queue) {
