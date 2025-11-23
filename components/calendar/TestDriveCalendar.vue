@@ -321,10 +321,25 @@ export default {
     // จัดกลุ่มการจองตามวันที่ พร้อมนับจำนวนตามสถานะ
     bookingsByDate() {
       const grouped = {};
-      
-      this.filteredBookings.forEach(booking => {
+      let skippedCount = 0;
+
+      this.filteredBookings.forEach((booking, index) => {
+        // ⚠️ ต้องมี startTime ไม่งั้นจะ group ไม่ได้
+        if (!booking.startTime) {
+          console.warn(`⚠️ Skipping booking ${booking.id} - no startTime`);
+          skippedCount++;
+          return;
+        }
+
         const date = dayjs(booking.startTime).format('YYYY-MM-DD');
-        
+
+        // ตรวจสอบว่า date valid
+        if (date === 'Invalid Date') {
+          console.warn(`⚠️ Invalid date for booking ${booking.id}:`, booking.startTime);
+          skippedCount++;
+          return;
+        }
+
         if (!grouped[date]) {
           grouped[date] = {
             pending: 0,
@@ -335,12 +350,34 @@ export default {
             bookings: []
           };
         }
-        
-        grouped[date][booking.status]++;
+
+        // แปลง status เป็น lowercase ก่อน (API อาจส่งมาเป็น UPPERCASE)
+        const status = (booking.status || 'pending').toLowerCase();
+
+        // เพิ่มจำนวนตามสถานะ
+        if (grouped[date][status] !== undefined) {
+          grouped[date][status]++;
+        } else {
+          console.warn(`⚠️ Unknown status "${status}" for booking ${booking.id}`);
+          grouped[date].pending++; // default to pending
+        }
+
         grouped[date].total++;
         grouped[date].bookings.push(booking);
+
+        // Debug: แสดง sample grouping
+        if (index < 3) {
+          console.log(`📊 Grouped booking ${booking.id} to ${date}:`, {
+            customer: booking.customerName,
+            status,
+            time: booking.startTime
+          });
+        }
       });
-      
+
+      console.log(`📅 bookingsByDate: ${Object.keys(grouped).length} dates, skipped: ${skippedCount}`);
+      console.log('📅 Dates with bookings:', Object.keys(grouped).sort());
+
       return grouped;
     }
   },

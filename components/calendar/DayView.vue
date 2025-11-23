@@ -154,38 +154,50 @@ export default {
   methods: {
     // นับจำนวนตามสถานะ
     getStatusCount(status) {
-      return this.dayBookings.filter(booking => booking.status === status).length
+      return this.dayBookings.filter(booking => {
+        const bookingStatus = (booking.status || '').toLowerCase()
+        return bookingStatus === status.toLowerCase()
+      }).length
     },
-    
+
     // ตรวจสอบว่าเป็นชั่วโมงปัจจุบันหรือไม่
     isCurrentHour(hour) {
       const now = dayjs()
       const currentHour = now.hour()
       const isToday = now.isSame(this.currentDate, 'day')
-      
+
       return isToday && currentHour === hour
     },
-    
+
     // จัดรูปแบบชั่วโมง
     formatHour(hour) {
       return `${hour.toString().padStart(2, '0')}:00`
     },
-    
-    // จัดรูปแบบเวลา
+
+    // จัดรูปแบบเวลา (รองรับหลาย format)
     formatTime(time) {
       if (!time) return ''
-      return dayjs(time).format('HH:mm')
+
+      const t = dayjs(time)
+      if (!t.isValid()) return ''
+
+      return t.format('HH:mm')
     },
-    
+
     // ดึงการจองในชั่วโมงนั้น
     getBookingsForHour(hour) {
       return this.dayBookings.filter(booking => {
-        const bookingHour = dayjs(booking.startTime).hour()
+        if (!booking.startTime) return false
+
+        const bookingTime = dayjs(booking.startTime)
+        if (!bookingTime.isValid()) return false
+
+        const bookingHour = bookingTime.hour()
         return bookingHour === hour
       })
     },
-    
-    // แปลงสถานะเป็นข้อความ
+
+    // แปลงสถานะเป็นข้อความ (รองรับทั้ง lowercase และ UPPERCASE)
     getStatusText(status) {
       const statusMap = {
         pending: 'รอดำเนินการ',
@@ -193,7 +205,8 @@ export default {
         completed: 'เสร็จสิ้น',
         cancelled: 'ยกเลิก'
       }
-      return statusMap[status] || status
+      const normalizedStatus = (status || '').toLowerCase()
+      return statusMap[normalizedStatus] || status
     },
     
     // ดูรายละเอียดการจอง
