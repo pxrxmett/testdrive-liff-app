@@ -806,8 +806,16 @@ export default {
         console.log('📄 Test Drive ID:', response.testDriveId)
 
         if (response.pdfUrl) {
-          console.log('📎 PDF URL:', response.pdfUrl)
-          console.log('ℹ️ หมายเหตุ: PDF URL อาจเป็น URL ของ server (ไม่ใช่ localhost)')
+          console.log('📎 PDF URL (Original):', response.pdfUrl)
+
+          // ✅ แก้ไข localhost URL เป็น production URL
+          const fixedPdfUrl = response.pdfUrl.replace(
+            'http://localhost:3000',
+            'https://isuzustock-management-production.up.railway.app'
+          )
+          console.log('%c🔗 ดูแบบฟอร์มทดลองขับ PDF (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c' + fixedPdfUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
+          console.log('ℹ️ หมายเหตุ: คลิก Ctrl+Click (Windows) หรือ Cmd+Click (Mac) ที่ URL สีน้ำเงินด้านบนเพื่อเปิดในแท็บใหม่')
         } else {
           console.log('⏳ PDF is being generated... (ยังไม่มี URL)')
         }

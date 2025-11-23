@@ -277,13 +277,48 @@ export default {
       try {
         const bookingId = this.$route.params.id
 
+        console.log('=== 📝 เริ่มบันทึก PDPA Consent และลายเซ็น ===')
+        console.log('Test Drive ID:', bookingId)
+
         // 1. บันทึก PDPA consent
         // ✅ MIGRATED: ใช้ submitPdpaConsent helper (brand-scoped)
-        await submitPdpaConsent(this.$axios, bookingId, true)
+        console.log('📝 Submitting PDPA consent...')
+        const pdpaResponse = await submitPdpaConsent(this.$axios, bookingId, true)
+        console.log('✅ PDPA Response:', pdpaResponse)
+
+        if (pdpaResponse.pdfUrl) {
+          console.log('📎 PDPA PDF URL (Original):', pdpaResponse.pdfUrl)
+
+          // ✅ แก้ไข localhost URL เป็น production URL
+          const fixedPdpaUrl = pdpaResponse.pdfUrl.replace(
+            'http://localhost:3000',
+            'https://isuzustock-management-production.up.railway.app'
+          )
+          console.log('%c🔗 ดูเอกสาร PDPA (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c' + fixedPdpaUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
+        }
 
         // 2. บันทึกลายเซ็น
         // ✅ MIGRATED: ใช้ uploadSignature helper (brand-scoped + AUTO-COMPRESSION!)
-        await uploadSignature(this.$axios, bookingId, this.signatureData)
+        console.log('📝 Uploading signature...')
+        const signatureResponse = await uploadSignature(this.$axios, bookingId, this.signatureData)
+        console.log('✅ Signature Response:', signatureResponse)
+
+        if (signatureResponse.signatureUrl) {
+          console.log('📎 Signature URL (Original):', signatureResponse.signatureUrl)
+
+          // ✅ แก้ไข localhost URL เป็น production URL
+          const fixedSignatureUrl = signatureResponse.signatureUrl.replace(
+            'http://localhost:3000',
+            'https://isuzustock-management-production.up.railway.app'
+          )
+          console.log('%c🔗 ดูรูปลายเซ็น (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c' + fixedSignatureUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
+        }
+
+        console.log('=== ✅ บันทึก PDPA และลายเซ็นสำเร็จ ===')
+        console.log('📋 Full PDPA Response:', JSON.stringify(pdpaResponse, null, 2))
+        console.log('📋 Full Signature Response:', JSON.stringify(signatureResponse, null, 2))
 
         this.successMessage = 'บันทึกลายเซ็นเรียบร้อยแล้ว!'
 
@@ -293,7 +328,8 @@ export default {
         }, 2000)
 
       } catch (err) {
-        console.error('Error submitting signature:', err)
+        console.error('❌ Error submitting signature:', err)
+        console.error('Error details:', err.response?.data || err.message)
         alert('ไม่สามารถบันทึกลายเซ็นได้ กรุณาลองใหม่')
       } finally {
         this.isSubmitting = false

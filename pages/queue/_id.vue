@@ -138,8 +138,15 @@
           <button class="button-3" @click="showCancelConfirm = true">
             <div class="text-wrapper-9">ยกเลิกคิว</div>
           </button>
-          <button class="button-4" @click="proceedToDocument">
-            <div class="text-wrapper-10">ดำเนินการเซ็นเอกสาร</div>
+          <!-- ✅ ปุ่มเปลี่ยนตามสถานะเอกสาร -->
+          <button v-if="!booking.hasPdpaConsent" class="button-4" @click="proceedToSignature">
+            <div class="text-wrapper-10">เซ็นเอกสาร PDPA</div>
+          </button>
+          <button v-else-if="!booking.hasDocument" class="button-4" @click="proceedToDocument">
+            <div class="text-wrapper-10">กรอกแบบฟอร์มทดลองขับ</div>
+          </button>
+          <button v-else class="button-4 button-start" @click="startTestDrive">
+            <div class="text-wrapper-10">เริ่มทดลองขับ</div>
           </button>
         </div>
       </template>
@@ -167,7 +174,7 @@
 </template>
 
 <script>
-import { getTestDriveById, deleteTestDrive } from '~/utils/brandApi'
+import { getTestDriveById, deleteTestDrive, getTestDriveDocument } from '~/utils/brandApi'
 import { formatTime as formatTimeUtil } from '~/utils/dateFormatter'
 
 export default {
@@ -186,7 +193,9 @@ export default {
         bookingDate: "",
         bookingTime: "",
         branch: "",
-        status: ""
+        status: "",
+        hasDocument: false, // ✅ เช็คว่ามีเอกสารแล้วหรือยัง
+        hasPdpaConsent: false // ✅ เช็คว่าเซ็น PDPA แล้วหรือยัง
       }
     };
   },
@@ -206,7 +215,7 @@ export default {
         // ✅ MIGRATED: ใช้ getTestDriveById helper (brand-scoped)
         const response = await getTestDriveById(this.$axios, bookingId);
         console.log('API Response:', response);
-        
+
         // แปลงข้อมูลจาก API เป็นรูปแบบที่ใช้ในคอมโพเนนท์
         this.booking = {
           id: response.id || bookingId,
@@ -218,10 +227,36 @@ export default {
           bookingTime: response.startTime ? formatTimeUtil(response.startTime) : "",
           branch: response.branch?.name || "ไม่ระบุสาขา",
           status: response.status || "pending",
-          customerPhone: response.customerPhone || ""
+          customerPhone: response.customerPhone || "",
+          hasPdpaConsent: response.pdpaConsent || false, // ✅ เช็คจาก response
+          hasDocument: false // จะเช็คด้านล่าง
         };
-        
+
+        // ✅ เช็คว่ามีเอกสารแล้วหรือยัง
+        try {
+          const document = await getTestDriveDocument(this.$axios, bookingId);
+          if (document && document.id) {
+            this.booking.hasDocument = true;
+            console.log('✅ มีเอกสารแล้ว - Document ID:', document.id);
+          }
+        } catch (docError) {
+          if (docError.response && docError.response.status === 404) {
+            this.booking.hasDocument = false;
+            console.log('ℹ️ ยังไม่มีเอกสาร');
+          } else {
+            console.warn('⚠️ Error checking document:', docError);
+          }
+        }
+
         console.log('Processed booking data:', this.booking);
+
+        // ✅ AUTO-REDIRECT: ถ้าเซ็นเอกสารครบแล้ว → ไปหน้า start-form เลย
+        if (this.booking.hasPdpaConsent && this.booking.hasDocument) {
+          console.log('🚗 เซ็นเอกสารครบแล้ว - Auto redirect ไปหน้า start-form');
+          setTimeout(() => {
+            this.$router.replace(`/test-drive/start-form/${bookingId}`);
+          }, 500); // รอ 0.5 วินาทีให้โหลดข้อมูลเสร็จก่อน
+        }
       } catch (error) {
         console.error("Error fetching booking details:", error);
         this.error = "ไม่สามารถดึงข้อมูลการจองได้ กรุณาลองใหม่อีกครั้ง";
@@ -330,9 +365,21 @@ export default {
         this.processingCancel = false;
       }
     },
+    proceedToSignature() {
+      // ไปหน้าเซ็น PDPA (ยังไม่มี PDPA)
+      this.$router.push(`/queue/signature/${this.booking.id}`);
+    },
+
     proceedToDocument() {
-  this.$router.push(`/queue/document/${this.booking.id}`);
-}
+      // ไปหน้ากรอกเอกสาร (มี PDPA แล้วแต่ยังไม่มีเอกสาร)
+      this.$router.push(`/queue/document/${this.booking.id}`);
+    },
+
+    startTestDrive() {
+      // ไปหน้าเริ่มทดลองขับ (มีเอกสารครบแล้ว)
+      console.log('🚗 เริ่มทดลองขับ - ไปหน้า start-form');
+      this.$router.push(`/test-drive/start-form/${this.booking.id}`);
+    }
     
     
   }
@@ -722,6 +769,15 @@ export default {
 
 .button-4:hover {
   background-color: #1e40af;
+}
+
+/* ✅ สีเขียวสำหรับปุ่ม "เริ่มทดลองขับ" */
+.button-4.button-start {
+  background-color: #10b981;
+}
+
+.button-4.button-start:hover {
+  background-color: #059669;
 }
 
 .text-wrapper-10 {
