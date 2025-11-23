@@ -711,9 +711,10 @@ export default {
         
         // อัพเดตสถานะรถ
         await this.updateVehicleStatus();
-        
+
         alert('แก้ไขข้อมูลการจองเรียบร้อยแล้ว');
-        this.$router.push('/queue');
+        // ✅ FIX: Redirect กลับไปหน้ารายละเอียดคิวแทน (ไม่ใช่ /queue ที่ไม่มี index)
+        this.$router.push(`/queue/${this.$route.params.id}`);
         
       } catch (err) {
         console.error('Error updating booking:', err);

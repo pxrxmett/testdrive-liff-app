@@ -397,8 +397,8 @@ export default {
 
   async fetch() {
     if (!this.$route.params.id) {
-      // ไม่มี ID - ไม่ควรเข้าหน้านี้โดยตรง
-      this.$router.push('/queue')
+      // ✅ FIX: ไม่มี ID - redirect กลับหน้าหลักแทน (ไม่ใช่ /queue ที่ไม่มี index)
+      this.$router.push('/')
       return
     }
 

@@ -363,7 +363,8 @@
         this.$router.push('/booking')
       },
       viewHistory() {
-        this.$router.push('/queue')
+        // ✅ FIX: Redirect กลับหน้าหลักแทน (ไม่ใช่ /queue ที่ไม่มี index)
+        this.$router.push('/')
       },
       calculateDistance() {
         if (!this.testDriveData.end_mileage || !this.testDriveData.start_mileage) return '0'

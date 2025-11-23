@@ -345,7 +345,8 @@ export default {
     viewBookingList() {
       // ลบข้อมูลการจองจาก localStorage
       localStorage.removeItem('lastBookingSuccess');
-      this.$router.push('/queue');
+      // ✅ FIX: Redirect กลับหน้าหลักแทน (ไม่ใช่ /queue ที่ไม่มี index)
+      this.$router.push('/');
     }
   }
 }
