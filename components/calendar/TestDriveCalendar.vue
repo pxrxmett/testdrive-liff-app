@@ -156,7 +156,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/th'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
-import { getTestDrives } from '~/utils/brandApi'
+import { getTestDrives, getAllStaffs } from '~/utils/brandApi'
 
 // เพิ่ม plugins
 dayjs.extend(utc)
@@ -559,15 +559,15 @@ export default {
     // โหลดข้อมูลพนักงาน
     async fetchStaffData() {
       try {
-        const response = await this.$axios.get('/staffs');
-        const staffs = response.data;
-        
+        // ✅ MIGRATED: ใช้ getAllStaffs helper (brand-scoped)
+        const staffs = await getAllStaffs(this.$axios);
+
         // แปลงเป็น object เพื่อหาได้เร็ว - ใช้ property shorthand
         this.staffData = staffs.reduce((acc, staff) => {
           acc[staff.id] = staff;
           return acc;
         }, {});
-        
+
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลพนักงาน:', error);
       }
