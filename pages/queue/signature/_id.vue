@@ -277,13 +277,33 @@ export default {
       try {
         const bookingId = this.$route.params.id
 
+        console.log('=== 📝 เริ่มบันทึก PDPA Consent และลายเซ็น ===')
+        console.log('Test Drive ID:', bookingId)
+
         // 1. บันทึก PDPA consent
         // ✅ MIGRATED: ใช้ submitPdpaConsent helper (brand-scoped)
-        await submitPdpaConsent(this.$axios, bookingId, true)
+        console.log('📝 Submitting PDPA consent...')
+        const pdpaResponse = await submitPdpaConsent(this.$axios, bookingId, true)
+        console.log('✅ PDPA Response:', pdpaResponse)
+
+        if (pdpaResponse.pdfUrl) {
+          console.log('📎 PDPA PDF URL:', pdpaResponse.pdfUrl)
+          console.log('🔗 ดูเอกสาร PDPA:', pdpaResponse.pdfUrl)
+        }
 
         // 2. บันทึกลายเซ็น
         // ✅ MIGRATED: ใช้ uploadSignature helper (brand-scoped + AUTO-COMPRESSION!)
-        await uploadSignature(this.$axios, bookingId, this.signatureData)
+        console.log('📝 Uploading signature...')
+        const signatureResponse = await uploadSignature(this.$axios, bookingId, this.signatureData)
+        console.log('✅ Signature Response:', signatureResponse)
+
+        if (signatureResponse.signatureUrl) {
+          console.log('📎 Signature URL:', signatureResponse.signatureUrl)
+        }
+
+        console.log('=== ✅ บันทึก PDPA และลายเซ็นสำเร็จ ===')
+        console.log('📋 Full PDPA Response:', JSON.stringify(pdpaResponse, null, 2))
+        console.log('📋 Full Signature Response:', JSON.stringify(signatureResponse, null, 2))
 
         this.successMessage = 'บันทึกลายเซ็นเรียบร้อยแล้ว!'
 
@@ -293,7 +313,8 @@ export default {
         }, 2000)
 
       } catch (err) {
-        console.error('Error submitting signature:', err)
+        console.error('❌ Error submitting signature:', err)
+        console.error('Error details:', err.response?.data || err.message)
         alert('ไม่สามารถบันทึกลายเซ็นได้ กรุณาลองใหม่')
       } finally {
         this.isSubmitting = false
