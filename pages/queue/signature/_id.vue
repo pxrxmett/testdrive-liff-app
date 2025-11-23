@@ -287,9 +287,9 @@ export default {
 
         this.successMessage = 'บันทึกลายเซ็นเรียบร้อยแล้ว!'
 
-        // Redirect after 2 seconds
+        // ✅ Redirect to document page (next step in flow)
         setTimeout(() => {
-          this.$router.push('/queue')
+          this.$router.push(`/queue/document/${bookingId}`)
         }, 2000)
 
       } catch (err) {
