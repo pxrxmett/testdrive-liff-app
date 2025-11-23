@@ -226,8 +226,8 @@ export default {
         in_progress: 'กำลังดำเนินการ'
       },
       // เพิ่ม properties ที่ template ใช้
-      selectedModel: '',
-      selectedStatus: '',
+      selectedModel: null, // ✅ FIX: ใช้ null แทน '' เพื่อความ consistent
+      selectedStatus: null, // ✅ FIX: ใช้ null แทน '' เพื่อความ consistent
       showModelFilter: false,
       showStatusFilter: false
     }
@@ -680,7 +680,7 @@ export default {
     filterQueues() {
       // ✅ ถ้ามีการค้นหา ให้ค้นหาจาก allQueuesData ทั้งหมด
       // ✅ ถ้าไม่มีการค้นหา ให้แสดงเฉพาะคิว 7 วัน
-      const hasSearch = this.searchTerm !== '' || this.selectedModel !== '' || this.selectedStatus !== ''
+      const hasSearch = this.searchTerm !== '' || this.selectedModel !== null || this.selectedStatus !== null
       const sourceData = hasSearch ? this.allQueuesData : this.queueData
 
       console.log('🔍 Filter:', {
@@ -699,11 +699,11 @@ export default {
                (queue.model && queue.model.toLowerCase().includes(searchTermLower)) ||
                (queue.phone && queue.phone.includes(searchTermLower))
 
-        // กรองตามรุ่นรถ
-        const matchesModel = this.selectedModel === '' || queue.model === this.selectedModel
+        // กรองตามรุ่นรถ (null = ทั้งหมด)
+        const matchesModel = this.selectedModel === null || queue.model === this.selectedModel
 
-        // กรองตามสถานะ
-        const matchesStatus = this.selectedStatus === '' || queue.status === this.selectedStatus
+        // กรองตามสถานะ (null = ทั้งหมด)
+        const matchesStatus = this.selectedStatus === null || queue.status === this.selectedStatus
 
         return matchesSearch && matchesModel && matchesStatus
       })
@@ -800,8 +800,8 @@ export default {
     },
 
     clearFilters() {
-      this.selectedModel = ''
-      this.selectedStatus = ''
+      this.selectedModel = null
+      this.selectedStatus = null
       this.searchTerm = ''
       this.showModelFilter = false
       this.showStatusFilter = false
