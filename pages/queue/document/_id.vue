@@ -771,6 +771,10 @@ export default {
       this.isSubmitting = true
 
       try {
+        console.log('=== 📝 เริ่มบันทึกเอกสาร ===')
+        console.log('Test Drive ID:', this.$route.params.id)
+        console.log('Mode:', this.hasExistingDocument ? 'UPDATE (PATCH)' : 'CREATE (POST)')
+
         let response
         // ✅ FIX: ใช้ hasExistingDocument แทน route params เพื่อตรวจสอบว่าเป็น create หรือ update
         const isEdit = this.hasExistingDocument
@@ -783,6 +787,7 @@ export default {
             this.$route.params.id,
             this.formData
           )
+          console.log('✅ Update Response:', response)
         } else {
           // ✅ MIGRATED: สร้างเอกสารใหม่ (Document API - brand-scoped) - ใช้ POST
           console.log('📝 Creating new document...')
@@ -791,16 +796,24 @@ export default {
             this.$route.params.id,
             this.formData
           )
+          console.log('✅ Create Response:', response)
           // Set flag เพื่อให้การ submit ครั้งต่อไปเป็น update
           this.hasExistingDocument = true
         }
 
-        console.log('📄 Document saved:', response)
+        console.log('=== ✅ บันทึกสำเร็จ ===')
+        console.log('📄 Document ID:', response.id || response.documentId)
+        console.log('📄 Test Drive ID:', response.testDriveId)
+
         if (response.pdfUrl) {
           console.log('📎 PDF URL:', response.pdfUrl)
+          console.log('ℹ️ หมายเหตุ: PDF URL อาจเป็น URL ของ server (ไม่ใช่ localhost)')
         } else {
-          console.log('⏳ PDF is being generated...')
+          console.log('⏳ PDF is being generated... (ยังไม่มี URL)')
         }
+
+        // แสดง response ทั้งหมดเพื่อการ debug
+        console.log('📋 Full Response:', JSON.stringify(response, null, 2))
 
         // แสดงข้อความสำเร็จ
         this.$nuxt.$emit('showToast', {
@@ -808,9 +821,18 @@ export default {
           type: 'success'
         })
 
-        // ✅ FIX: Redirect กลับไปหน้ารายละเอียดคิวแทน (ไม่ใช่ /queue ที่ไม่มี index)
+        // ✅ FIX: Redirect ตามสถานะ
+        // - ถ้าสร้างใหม่ → ไปหน้าเริ่มทดลองขับ
+        // - ถ้าแก้ไข → กลับไปหน้ารายละเอียดคิว
         setTimeout(() => {
-          this.$router.push(`/queue/${this.$route.params.id}`)
+          if (isEdit) {
+            // แก้ไขเอกสาร → กลับไปหน้ารายละเอียด
+            this.$router.push(`/queue/${this.$route.params.id}`)
+          } else {
+            // สร้างเอกสารใหม่ → ไปหน้าเริ่มทดลองขับ
+            console.log('🚗 Redirecting to start-form page...')
+            this.$router.push(`/test-drive/start-form/${this.$route.params.id}`)
+          }
         }, 1500)
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error)
