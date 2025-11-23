@@ -798,20 +798,11 @@ export default {
           message: isEdit ? 'อัพเดตเอกสารเรียบร้อยแล้ว' : 'สร้างเอกสารเรียบร้อยแล้ว',
           type: 'success'
         })
-        
-        // นำทางไปหน้าอื่น
-        if (response && response.id) {
-          if (this.$store.state.booking && this.$store.state.booking.currentBooking) {
-            // ถ้ามาจากการจอง ให้ไปหน้าจองสำเร็จ
-            this.$router.push('/booking/success')
-          } else {
-            // ไปหน้ารายละเอียดเอกสาร
-            this.$router.push(`/queue/${response.id}/document`)
-          }
-        } else {
-          // กลับไปหน้ารายการคิว
+
+        // ✅ Redirect กลับไปหน้ารายการคิว
+        setTimeout(() => {
           this.$router.push('/queue')
-        }
+        }, 1500)
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error)
         this.$nuxt.$emit('showToast', {
