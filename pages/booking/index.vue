@@ -971,9 +971,26 @@ export default {
         distance: 0, // ค่าเริ่มต้น
         duration: 60, // หน่วยเป็นนาที
         responsible_staff: responsibleStaffId, // ✅ FIX: ใช้ staff ID ที่เป็น number
-        brand_id: brandId, // ✅ เพิ่ม brand_id ตาม API spec
-        notes: formData.notes || '' // ✅ เพิ่ม notes
+        brand_id: brandId // ✅ เพิ่ม brand_id ตาม API spec
+        // ⚠️ notes: ไม่ส่งเพราะ backend ยังไม่ support (จะเก็บไว้ใน localStorage แทน)
       };
+
+      // ✅ เก็บ notes ไว้ใน localStorage สำหรับใช้ภายหลัง (เมื่อ backend support)
+      if (formData.notes && formData.notes.trim()) {
+        try {
+          const notesData = JSON.parse(localStorage.getItem('testDriveNotes') || '{}');
+          // จะเก็บ notes พร้อม timestamp สำหรับใช้ภายหลัง
+          notesData[`pending_${Date.now()}`] = {
+            customerName: formData.customerName,
+            notes: formData.notes.trim(),
+            createdAt: new Date().toISOString()
+          };
+          localStorage.setItem('testDriveNotes', JSON.stringify(notesData));
+          console.log('📝 Notes saved to localStorage (backend not supported yet):', formData.notes);
+        } catch (err) {
+          console.warn('Failed to save notes to localStorage:', err);
+        }
+      }
       
       // เพิ่มข้อมูลเกี่ยวกับบัตรประชาชน/ใบขับขี่ (สำหรับ walkin)
       if (type === 'walkin' && this.isDataScanned) {
