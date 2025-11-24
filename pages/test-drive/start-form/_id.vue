@@ -416,9 +416,15 @@
           // ✅ FIX: Re-check สถานะล่าสุดก่อนส่ง PATCH เพื่อป้องกัน race condition
           console.log('🔄 Re-checking test drive status before PATCH...')
           const latestData = await getTestDriveById(this.$axios, this.$route.params.id)
-          const currentStatus = (latestData.status || '').toUpperCase()
 
-          console.log('📊 Current status:', currentStatus)
+          // 🐛 DEBUG: แสดงข้อมูลทั้งหมดเพื่อ debug
+          console.log('📦 Latest test drive data:', JSON.stringify(latestData, null, 2))
+          console.log('📊 Raw status value:', latestData.status)
+          console.log('📊 Status type:', typeof latestData.status)
+
+          const currentStatus = (latestData.status || '').toUpperCase()
+          console.log('📊 Uppercase status:', currentStatus)
+          console.log('📊 Is PENDING?', currentStatus === 'PENDING')
 
           if (currentStatus !== 'PENDING') {
             this.$toast.error(`ไม่สามารถเริ่มทดลองขับได้ เนื่องจากสถานะเป็น "${latestData.status}" แล้ว`)
