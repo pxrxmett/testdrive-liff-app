@@ -333,7 +333,7 @@
 <script>
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
-import { getAvailableVehicles, createTestDrive, getTestDrives, getBrandCode } from '~/utils/brandApi'
+import { getAvailableVehicles, createTestDrive, getTestDrives } from '~/utils/brandApi'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -620,11 +620,9 @@ export default {
               
               if (checkResponse?.registered && checkResponse?.staffInfo?.id) {
                 const staffInfo = checkResponse.staffInfo;
-                // ✅ FIX: Prioritize real staff name (first_name + last_name) BEFORE LINE displayName
-                const realName = `${staffInfo.first_name || ''} ${staffInfo.last_name || ''}`.trim();
                 this.staffInfo = {
                   id: staffInfo.id,
-                  name: realName || staffInfo.name || staffInfo.displayName || 'พนักงาน',
+                  name: staffInfo.name || staffInfo.displayName || `${staffInfo.first_name || ''} ${staffInfo.last_name || ''}`.trim(),
                   position: staffInfo.position || 'พนักงานขาย'
                 };
                 
@@ -699,31 +697,18 @@ export default {
             // ตรวจสอบโครงสร้างของข้อมูลที่ได้รับ
             if (response.length > 0) {
               console.log('Sample car data:', response[0]);
-
-              // ✅ FIX: Filter only ISUZU brand vehicles before mapping
-              const currentBrand = (getBrandCode() || 'isuzu').toUpperCase();
-              const filteredVehicles = response.filter(vehicle => {
-                const vehicleBrand = (vehicle.brand || vehicle.brandCode || '').toUpperCase();
-                const isMatch = vehicleBrand === currentBrand;
-                if (!isMatch) {
-                  console.log(`⚠️ Filtering out non-${currentBrand} vehicle:`, vehicle.model || vehicle.vehicleModel, `(brand: ${vehicleBrand})`);
-                }
-                return isMatch;
-              });
-
-              console.log(`✅ Filtered ${filteredVehicles.length}/${response.length} vehicles for brand: ${currentBrand}`);
-
+              
               // ปรับเปลี่ยนวิธีแมปข้อมูลให้ตรงกับโครงสร้างจริงที่ได้จาก API
-              this.carModels = filteredVehicles.map(vehicle => {
+              this.carModels = response.map(vehicle => {
                 // ตรวจสอบว่าค่าอยู่ในโครงสร้างใด
                 const id = vehicle.id || vehicle.vehicleId || vehicle.vehicleCode || '';
                 const name = vehicle.model || vehicle.vehicleModel || vehicle.mdlCd || 'ไม่ระบุ';
-
+                
                 console.log(`Mapping car: ${id} - ${name}`);
-
+                
                 return { id, name };
               });
-
+              
               console.log('Mapped car models:', this.carModels);
             } else {
               console.log('No vehicles returned from API, using default data');
@@ -940,10 +925,8 @@ export default {
         endTime: endTimeISO
       })
 
-      // ✅ FIX: แปลง vehicle_id ให้เป็น integer
+      // แปลง vehicle_id ให้เป็น integer
       const vehicleId = this.parseVehicleId(formData.carModel);
-
-      // ⚠️ หมายเหตุ: validation ของ vehicle_id ทำใน validatePhoneForm/validateWalkinForm แล้ว
 
       // ✅ แปลง brandCode เป็น brand_id (1 = ISUZU, 2 = BYD)
       const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
@@ -988,26 +971,9 @@ export default {
         distance: 0, // ค่าเริ่มต้น
         duration: 60, // หน่วยเป็นนาที
         responsible_staff: responsibleStaffId, // ✅ FIX: ใช้ staff ID ที่เป็น number
-        brand_id: brandId // ✅ เพิ่ม brand_id ตาม API spec
-        // ⚠️ notes: ไม่ส่งเพราะ backend ยังไม่ support (จะเก็บไว้ใน localStorage แทน)
+        brand_id: brandId, // ✅ เพิ่ม brand_id ตาม API spec
+        notes: formData.notes || '' // ✅ เพิ่ม notes
       };
-
-      // ✅ เก็บ notes ไว้ใน localStorage สำหรับใช้ภายหลัง (เมื่อ backend support)
-      if (formData.notes && formData.notes.trim()) {
-        try {
-          const notesData = JSON.parse(localStorage.getItem('testDriveNotes') || '{}');
-          // จะเก็บ notes พร้อม timestamp สำหรับใช้ภายหลัง
-          notesData[`pending_${Date.now()}`] = {
-            customerName: formData.customerName,
-            notes: formData.notes.trim(),
-            createdAt: new Date().toISOString()
-          };
-          localStorage.setItem('testDriveNotes', JSON.stringify(notesData));
-          console.log('📝 Notes saved to localStorage (backend not supported yet):', formData.notes);
-        } catch (err) {
-          console.warn('Failed to save notes to localStorage:', err);
-        }
-      }
       
       // เพิ่มข้อมูลเกี่ยวกับบัตรประชาชน/ใบขับขี่ (สำหรับ walkin)
       if (type === 'walkin' && this.isDataScanned) {
@@ -1030,9 +996,8 @@ export default {
       if (/^\d+$/.test(vehicleId)) {
         return parseInt(vehicleId);
       }
-      // ✅ FIX: ถ้าไม่ได้เลือกรถ ให้ return null แทน 1 เพื่อให้ validation จับได้
-      console.warn('⚠️ Invalid vehicle_id:', vehicleId);
-      return null;
+      // ถ้าไม่ใช่ตัวเลข ให้ส่งคืนค่าเริ่มต้น
+      return 1; // ใช้ 1 เป็นค่าเริ่มต้น
     },
     
     // ปรับปรุงฟังก์ชัน submitPhoneBooking
