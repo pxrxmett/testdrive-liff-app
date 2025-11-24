@@ -504,14 +504,19 @@ export default {
           endTime: selectedEndTime.toISOString()
         });
 
-        // ดึงรายการจองทั้งหมดในวันที่เลือก
-        const bookings = await getTestDrives(this.$axios, {
+        // ✅ FIX: ดึงรายการจองทั้งหมดในวันที่เลือก (ไม่ filter status ที่ API เพราะ API ไม่ support)
+        const allBookings = await getTestDrives(this.$axios, {
           start_date: date,
-          end_date: date,
-          status: 'PENDING,ONGOING' // เฉพาะรายการที่ยังไม่เสร็จสิ้น
+          end_date: date
         });
 
-        console.log('📋 Found bookings:', bookings.length);
+        // ✅ FIX: Filter เฉพาะรายการที่ยังไม่เสร็จสิ้นฝั่ง client แทน
+        const bookings = allBookings.filter(booking => {
+          const status = (booking.status || '').toUpperCase();
+          return status === 'PENDING' || status === 'ONGOING';
+        });
+
+        console.log('📋 Found bookings:', bookings.length, '(filtered from', allBookings.length, 'total)');
 
         // หารถที่ไม่ว่างในช่วงเวลาที่เลือก
         const unavailableIds = new Set();
