@@ -399,18 +399,18 @@
         try {
           this.isSubmitting = true
           
+          // ✅ FIX: ส่งเฉพาะ fields ที่ API รับ (ตาม error message)
           const payload = {
-            status: 'ONGOING', // ✅ FIX: ใช้ตัวพิมพ์ใหญ่ตาม API spec
+            status: 'ONGOING',
             start_time: this.calculateStartDateTime(),
             duration: parseInt(this.formData.duration),
             test_route: this.formData.testRoute,
             distance: this.getSelectedDistance(),
-            expected_end_time: this.calculateEndDateTime(),
-            start_mileage: parseFloat(this.formData.startMileage),
-            start_fuel_level: parseFloat(this.formData.fuelLevel),
-            start_notes: this.formData.notes,
-            vehicle_condition_check: JSON.stringify(this.formData.checks)
+            expected_end_time: this.calculateEndDateTime()
+            // ⚠️ Backend ไม่รับ: start_mileage, start_fuel_level, start_notes, vehicle_condition_check
           }
+
+          console.log('📤 Starting test drive with payload:', payload)
 
           // ✅ FIX: ใช้ updateTestDrive helper (brand-scoped)
           await updateTestDrive(this.$axios, this.$route.params.id, payload, 'PATCH')

@@ -443,19 +443,31 @@ export default {
     extractDate(dateTimeString) {
       if (!dateTimeString) return '';
       try {
+        // ✅ FIX: แปลง UTC เป็น Bangkok time ก่อนเอา date
         const date = new Date(dateTimeString);
-        return date.toISOString().split('T')[0];
-      } catch {
+        // แปลงเป็น Bangkok timezone
+        const bangkokDate = new Date(date.getTime() + (7 * 60 * 60 * 1000)); // +7 hours
+        return bangkokDate.toISOString().split('T')[0];
+      } catch (err) {
+        console.error('Error extracting date:', err, dateTimeString);
         return '';
       }
     },
-    
+
     extractTime(dateTimeString) {
       if (!dateTimeString) return '';
       try {
+        // ✅ FIX: แปลง UTC เป็น Bangkok time
         const date = new Date(dateTimeString);
-        return date.toTimeString().slice(0, 5);
-      } catch {
+        // Bangkok = UTC+7
+        const bangkokHours = date.getUTCHours() + 7;
+        const hours = bangkokHours % 24;
+        const minutes = date.getUTCMinutes();
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        console.log('⏰ Extracted time:', { utc: dateTimeString, bangkok: timeString });
+        return timeString;
+      } catch (err) {
+        console.error('Error extracting time:', err, dateTimeString);
         return '';
       }
     },
