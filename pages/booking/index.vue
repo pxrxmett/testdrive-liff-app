@@ -940,13 +940,10 @@ export default {
         endTime: endTimeISO
       })
 
-      // ✅ FIX: แปลง vehicle_id ให้เป็น integer และตรวจสอบว่าเลือกรถแล้ว
+      // ✅ FIX: แปลง vehicle_id ให้เป็น integer
       const vehicleId = this.parseVehicleId(formData.carModel);
 
-      // ✅ Validate vehicle_id
-      if (!vehicleId) {
-        throw new Error('กรุณาเลือกรุ่นรถ');
-      }
+      // ⚠️ หมายเหตุ: validation ของ vehicle_id ทำใน validatePhoneForm/validateWalkinForm แล้ว
 
       // ✅ แปลง brandCode เป็น brand_id (1 = ISUZU, 2 = BYD)
       const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
