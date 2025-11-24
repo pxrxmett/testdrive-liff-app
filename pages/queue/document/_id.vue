@@ -808,14 +808,21 @@ export default {
         if (response.pdfUrl) {
           console.log('📎 PDF URL (Original):', response.pdfUrl)
 
-          // ✅ แก้ไข localhost URL เป็น production URL
+          // ✅ FIX: แก้ไข localhost URL เป็น production URL
           const fixedPdfUrl = response.pdfUrl.replace(
             'http://localhost:3000',
             'https://isuzustock-management-production.up.railway.app'
           )
-          console.log('%c🔗 ดูแบบฟอร์มทดลองขับ PDF (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c🔗 ดูแบบฟอร์มทดลองขับ PDF:', 'color: #10b981; font-weight: bold; font-size: 14px')
           console.log('%c' + fixedPdfUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
-          console.log('ℹ️ หมายเหตุ: คลิก Ctrl+Click (Windows) หรือ Cmd+Click (Mac) ที่ URL สีน้ำเงินด้านบนเพื่อเปิดในแท็บใหม่')
+
+          // ✅ FIX: เปิด PDF ในหน้าต่างใหม่ทันที
+          try {
+            window.open(fixedPdfUrl, '_blank', 'noopener,noreferrer')
+            console.log('✅ Opened PDF in new tab')
+          } catch (err) {
+            console.error('❌ Failed to open PDF:', err)
+          }
         } else {
           console.log('⏳ PDF is being generated... (ยังไม่มี URL)')
         }

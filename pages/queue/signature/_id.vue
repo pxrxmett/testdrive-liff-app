@@ -289,13 +289,21 @@ export default {
         if (pdpaResponse.pdfUrl) {
           console.log('📎 PDPA PDF URL (Original):', pdpaResponse.pdfUrl)
 
-          // ✅ แก้ไข localhost URL เป็น production URL
+          // ✅ FIX: แก้ไข localhost URL เป็น production URL
           const fixedPdpaUrl = pdpaResponse.pdfUrl.replace(
             'http://localhost:3000',
             'https://isuzustock-management-production.up.railway.app'
           )
-          console.log('%c🔗 ดูเอกสาร PDPA (คลิกที่ URL ด้านล่าง):', 'color: #10b981; font-weight: bold; font-size: 14px')
+          console.log('%c🔗 ดูเอกสาร PDPA:', 'color: #10b981; font-weight: bold; font-size: 14px')
           console.log('%c' + fixedPdpaUrl, 'color: #3b82f6; text-decoration: underline; font-size: 13px')
+
+          // ✅ FIX: เปิด PDF ในหน้าต่างใหม่ทันที
+          try {
+            window.open(fixedPdpaUrl, '_blank', 'noopener,noreferrer')
+            console.log('✅ Opened PDPA PDF in new tab')
+          } catch (err) {
+            console.error('❌ Failed to open PDPA PDF:', err)
+          }
         }
 
         // 2. บันทึกลายเซ็น

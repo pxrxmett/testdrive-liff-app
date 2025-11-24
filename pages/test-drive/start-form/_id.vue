@@ -248,6 +248,8 @@
   </template>
   
   <script>
+  import { updateTestDrive, updateVehicleStatus } from '~/utils/brandApi'
+
   export default {
     name: 'TestDriveStartForm',
     data() {
@@ -398,7 +400,7 @@
           this.isSubmitting = true
           
           const payload = {
-            status: 'ongoing',
+            status: 'ONGOING', // ✅ FIX: ใช้ตัวพิมพ์ใหญ่ตาม API spec
             start_time: this.calculateStartDateTime(),
             duration: parseInt(this.formData.duration),
             test_route: this.formData.testRoute,
@@ -409,15 +411,13 @@
             start_notes: this.formData.notes,
             vehicle_condition_check: JSON.stringify(this.formData.checks)
           }
-  
-          // อัพเดทการทดลองขับ
-          await this.$axios.patch(`/test-drives/${this.$route.params.id}`, payload)
-          
-          // อัพเดทสถานะรถ
+
+          // ✅ FIX: ใช้ updateTestDrive helper (brand-scoped)
+          await updateTestDrive(this.$axios, this.$route.params.id, payload, 'PATCH')
+
+          // ✅ FIX: ใช้ updateVehicleStatus helper (brand-scoped)
           if (this.testDriveData.vehicle_id) {
-            await this.$axios.patch(`/stock/vehicles/${this.testDriveData.vehicle_id}/status`, {
-              status: 'in_test'
-            })
+            await updateVehicleStatus(this.$axios, this.testDriveData.vehicle_id, 'in_test')
           }
           
           this.$toast.success('เริ่มการทดลองขับแล้ว')
