@@ -302,10 +302,16 @@
 
           console.log('✅ Loaded test drive data:', this.testDriveData)
 
-          // ✅ FIX: ตรวจสอบสถานะเป็น uppercase (backend ใช้ 'PENDING' ไม่ใช่ 'pending')
+          // ✅ FIX: ตรวจสอบสถานะ รองรับทั้ง "PENDING" และ "รอดำเนินการ"
           const status = (this.testDriveData.status || '').toUpperCase()
-          if (status !== 'PENDING') {
-            this.$toast.error('การทดลองขับนี้ไม่สามารถเริ่มได้ (สถานะไม่ใช่ PENDING)')
+          const isPending = status === 'PENDING' ||
+                           status === 'รอดำเนินการ' ||
+                           this.testDriveData.status === 'รอดำเนินการ'
+
+          console.log('📊 Initial status check:', { raw: this.testDriveData.status, upper: status, isPending })
+
+          if (!isPending) {
+            this.$toast.error(`การทดลองขับนี้ไม่สามารถเริ่มได้ (สถานะ: ${this.testDriveData.status})`)
             this.$router.push(`/test-drive/${testDriveId}`)
             return
           }
@@ -422,11 +428,16 @@
           console.log('📊 Raw status value:', latestData.status)
           console.log('📊 Status type:', typeof latestData.status)
 
+          // ✅ FIX: รองรับทั้ง "PENDING" (EN) และ "รอดำเนินการ" (TH)
           const currentStatus = (latestData.status || '').toUpperCase()
-          console.log('📊 Uppercase status:', currentStatus)
-          console.log('📊 Is PENDING?', currentStatus === 'PENDING')
+          const isPending = currentStatus === 'PENDING' ||
+                           currentStatus === 'รอดำเนินการ' ||
+                           latestData.status === 'รอดำเนินการ'
 
-          if (currentStatus !== 'PENDING') {
+          console.log('📊 Uppercase status:', currentStatus)
+          console.log('📊 Is PENDING?', isPending)
+
+          if (!isPending) {
             this.$toast.error(`ไม่สามารถเริ่มทดลองขับได้ เนื่องจากสถานะเป็น "${latestData.status}" แล้ว`)
             this.closeModal()
             // Reload หน้าใหม่เพื่อแสดงสถานะล่าสุด

@@ -940,8 +940,13 @@ export default {
         endTime: endTimeISO
       })
 
-      // แปลง vehicle_id ให้เป็น integer
+      // ✅ FIX: แปลง vehicle_id ให้เป็น integer และตรวจสอบว่าเลือกรถแล้ว
       const vehicleId = this.parseVehicleId(formData.carModel);
+
+      // ✅ Validate vehicle_id
+      if (!vehicleId) {
+        throw new Error('กรุณาเลือกรุ่นรถ');
+      }
 
       // ✅ แปลง brandCode เป็น brand_id (1 = ISUZU, 2 = BYD)
       const brandCode = this.$store?.state?.auth?.brandCode || localStorage.getItem('brandCode') || 'ISUZU';
@@ -1028,8 +1033,9 @@ export default {
       if (/^\d+$/.test(vehicleId)) {
         return parseInt(vehicleId);
       }
-      // ถ้าไม่ใช่ตัวเลข ให้ส่งคืนค่าเริ่มต้น
-      return 1; // ใช้ 1 เป็นค่าเริ่มต้น
+      // ✅ FIX: ถ้าไม่ได้เลือกรถ ให้ return null แทน 1 เพื่อให้ validation จับได้
+      console.warn('⚠️ Invalid vehicle_id:', vehicleId);
+      return null;
     },
     
     // ปรับปรุงฟังก์ชัน submitPhoneBooking
