@@ -393,11 +393,17 @@
         return Object.keys(this.errors).length === 0
       },
       submitForm() {
+        // ✅ FIX: ป้องกันการกด submit ซ้ำ
+        if (this.isSubmitting) {
+          console.log('⚠️ Already submitting, ignoring duplicate submit')
+          return
+        }
+
         if (!this.validateForm()) {
           this.$toast.error('กรุณาตรวจสอบข้อมูลและแก้ไขข้อผิดพลาด')
           return
         }
-        
+
         this.showConfirmModal = true
       },
       closeModal() {
@@ -406,7 +412,22 @@
       async confirmStart() {
         try {
           this.isSubmitting = true
-          
+
+          // ✅ FIX: Re-check สถานะล่าสุดก่อนส่ง PATCH เพื่อป้องกัน race condition
+          console.log('🔄 Re-checking test drive status before PATCH...')
+          const latestData = await getTestDriveById(this.$axios, this.$route.params.id)
+          const currentStatus = (latestData.status || '').toUpperCase()
+
+          console.log('📊 Current status:', currentStatus)
+
+          if (currentStatus !== 'PENDING') {
+            this.$toast.error(`ไม่สามารถเริ่มทดลองขับได้ เนื่องจากสถานะเป็น "${latestData.status}" แล้ว`)
+            this.closeModal()
+            // Reload หน้าใหม่เพื่อแสดงสถานะล่าสุด
+            await this.loadData()
+            return
+          }
+
           // ✅ FIX: ส่งเฉพาะ fields ที่ API รับ (ตาม error message)
           const payload = {
             status: 'ONGOING',
@@ -427,13 +448,15 @@
           if (this.testDriveData.vehicle_id) {
             await updateVehicleStatus(this.$axios, this.testDriveData.vehicle_id, 'in_test')
           }
-          
+
           this.$toast.success('เริ่มการทดลองขับแล้ว')
           this.$router.push(`/test-drive/${this.$route.params.id}`)
-          
+
         } catch (error) {
-          console.error('Error starting test drive:', error)
-          this.$toast.error('ไม่สามารถเริ่มการทดลองขับได้')
+          console.error('❌ Error starting test drive:', error)
+          console.error('Error details:', error.response?.data || error.message)
+          const errorMsg = error.response?.data?.message || 'ไม่สามารถเริ่มการทดลองขับได้'
+          this.$toast.error(errorMsg)
         } finally {
           this.isSubmitting = false
           this.closeModal()
