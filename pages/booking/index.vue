@@ -333,7 +333,7 @@
 <script>
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
-import { getAvailableVehicles, createTestDrive, getTestDrives } from '~/utils/brandApi'
+import { getAvailableVehicles, createTestDrive, getTestDrives, getBrandCode } from '~/utils/brandApi'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -620,9 +620,11 @@ export default {
               
               if (checkResponse?.registered && checkResponse?.staffInfo?.id) {
                 const staffInfo = checkResponse.staffInfo;
+                // ✅ FIX: Prioritize real staff name (first_name + last_name) BEFORE LINE displayName
+                const realName = `${staffInfo.first_name || ''} ${staffInfo.last_name || ''}`.trim();
                 this.staffInfo = {
                   id: staffInfo.id,
-                  name: staffInfo.name || staffInfo.displayName || `${staffInfo.first_name || ''} ${staffInfo.last_name || ''}`.trim(),
+                  name: realName || staffInfo.name || staffInfo.displayName || 'พนักงาน',
                   position: staffInfo.position || 'พนักงานขาย'
                 };
                 
@@ -697,18 +699,31 @@ export default {
             // ตรวจสอบโครงสร้างของข้อมูลที่ได้รับ
             if (response.length > 0) {
               console.log('Sample car data:', response[0]);
-              
+
+              // ✅ FIX: Filter only ISUZU brand vehicles before mapping
+              const currentBrand = (getBrandCode() || 'isuzu').toUpperCase();
+              const filteredVehicles = response.filter(vehicle => {
+                const vehicleBrand = (vehicle.brand || vehicle.brandCode || '').toUpperCase();
+                const isMatch = vehicleBrand === currentBrand;
+                if (!isMatch) {
+                  console.log(`⚠️ Filtering out non-${currentBrand} vehicle:`, vehicle.model || vehicle.vehicleModel, `(brand: ${vehicleBrand})`);
+                }
+                return isMatch;
+              });
+
+              console.log(`✅ Filtered ${filteredVehicles.length}/${response.length} vehicles for brand: ${currentBrand}`);
+
               // ปรับเปลี่ยนวิธีแมปข้อมูลให้ตรงกับโครงสร้างจริงที่ได้จาก API
-              this.carModels = response.map(vehicle => {
+              this.carModels = filteredVehicles.map(vehicle => {
                 // ตรวจสอบว่าค่าอยู่ในโครงสร้างใด
                 const id = vehicle.id || vehicle.vehicleId || vehicle.vehicleCode || '';
                 const name = vehicle.model || vehicle.vehicleModel || vehicle.mdlCd || 'ไม่ระบุ';
-                
+
                 console.log(`Mapping car: ${id} - ${name}`);
-                
+
                 return { id, name };
               });
-              
+
               console.log('Mapped car models:', this.carModels);
             } else {
               console.log('No vehicles returned from API, using default data');
