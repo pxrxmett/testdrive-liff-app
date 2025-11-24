@@ -420,13 +420,21 @@
           this.isSubmitting = true
 
           // ✅ FIX: Re-check สถานะล่าสุดก่อนส่ง PATCH เพื่อป้องกัน race condition
-          console.log('🔄 Re-checking test drive status before PATCH...')
+          console.log('🔄🔄🔄 RE-CHECKING TEST DRIVE STATUS BEFORE PATCH 🔄🔄🔄')
+          console.log('Test Drive ID:', this.$route.params.id)
+
           const latestData = await getTestDriveById(this.$axios, this.$route.params.id)
 
           // 🐛 DEBUG: แสดงข้อมูลทั้งหมดเพื่อ debug
-          console.log('📦 Latest test drive data:', JSON.stringify(latestData, null, 2))
-          console.log('📊 Raw status value:', latestData.status)
-          console.log('📊 Status type:', typeof latestData.status)
+          console.log('=' .repeat(80))
+          console.log('📦 FULL TEST DRIVE DATA:')
+          console.log(JSON.stringify(latestData, null, 2))
+          console.log('=' .repeat(80))
+          console.log('📊 Status Analysis:')
+          console.log('  - Raw value:', latestData.status)
+          console.log('  - Type:', typeof latestData.status)
+          console.log('  - Length:', latestData.status?.length)
+          console.log('  - Char codes:', Array.from(latestData.status || '').map(c => c.charCodeAt(0)))
 
           // ✅ FIX: รองรับทั้ง "PENDING" (EN) และ "รอดำเนินการ" (TH)
           const currentStatus = (latestData.status || '').toUpperCase()
@@ -434,16 +442,25 @@
                            currentStatus === 'รอดำเนินการ' ||
                            latestData.status === 'รอดำเนินการ'
 
-          console.log('📊 Uppercase status:', currentStatus)
-          console.log('📊 Is PENDING?', isPending)
+          console.log('📊 Validation Results:')
+          console.log('  - Uppercase status:', currentStatus)
+          console.log('  - Is "PENDING"?', currentStatus === 'PENDING')
+          console.log('  - Is "รอดำเนินการ" (upper)?', currentStatus === 'รอดำเนินการ')
+          console.log('  - Is "รอดำเนินการ" (raw)?', latestData.status === 'รอดำเนินการ')
+          console.log('  - Final isPending?', isPending)
+          console.log('=' .repeat(80))
 
           if (!isPending) {
+            console.error('❌ STATUS CHECK FAILED!')
+            console.error('Status is NOT pending. Blocking PATCH.')
             this.$toast.error(`ไม่สามารถเริ่มทดลองขับได้ เนื่องจากสถานะเป็น "${latestData.status}" แล้ว`)
             this.closeModal()
             // Reload หน้าใหม่เพื่อแสดงสถานะล่าสุด
             await this.loadData()
             return
           }
+
+          console.log('✅ STATUS CHECK PASSED! Proceeding with PATCH...')
 
           // ✅ FIX: ส่งเฉพาะ fields ที่ API รับ (ตาม error message)
           const payload = {
