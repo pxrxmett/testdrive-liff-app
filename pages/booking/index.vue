@@ -120,15 +120,6 @@
                   กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (เช่น 0812345678)
                 </div>
               </div>
-
-              <!-- ✅ เพิ่มช่อง Notes -->
-              <div class="container-7">
-                <div class="div-wrapper">
-                  <div class="text-wrapper-6">หมายเหตุ (ถ้ามี)</div>
-                </div>
-
-                <textarea v-model="phoneForm.notes" placeholder="ระบุข้อมูลเพิ่มเติม" class="input-2 textarea-notes" rows="3"></textarea>
-              </div>
             </div>
 
             <button class="button-3" @click="submitBooking('phone')" :disabled="isSubmitting">
@@ -263,15 +254,6 @@
                   <span>ข้อมูลจากการสแกน</span>
                 </div>
               </div>
-
-              <!-- ✅ เพิ่มช่อง Notes สำหรับ Walk-in -->
-              <div class="container-7">
-                <div class="div-wrapper">
-                  <div class="text-wrapper-6">หมายเหตุ (ถ้ามี)</div>
-                </div>
-
-                <textarea v-model="walkinForm.notes" placeholder="ระบุข้อมูลเพิ่มเติม" class="input-2 textarea-notes" rows="3"></textarea>
-              </div>
             </div>
 
             <button class="button-3" @click="submitBooking('walkin')" :disabled="isSubmitting">
@@ -334,13 +316,6 @@
 import LicenseScannerModal from './LicenseScannerModal.vue'
 import BottomNav from '~/components/common/BottomNav.vue'
 import { getAvailableVehicles, createTestDrive, getTestDrives } from '~/utils/brandApi'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
-
-// ✅ FIX: Enable timezone support
-dayjs.extend(utc)
-dayjs.extend(timezone)
 
 export default {
   name: "BookingPage",
@@ -399,8 +374,7 @@ export default {
         date: formattedDate, // ใช้วันที่ปัจจุบัน
         time: '', // จะถูกกำหนดค่าเริ่มต้นใน created()
         customerName: '',
-        phone: '',
-        notes: '' // ✅ เพิ่มช่อง notes
+        phone: ''
       },
       walkinForm: {
         carModel: '',
@@ -409,8 +383,7 @@ export default {
         customerName: '',
         idNumber: '',
         idType: 'drivingLicense',
-        expireDate: '',
-        notes: '' // ✅ เพิ่มช่อง notes
+        expireDate: ''
       },
       apiErrorMessages: [] // เพิ่มตัวแปรสำหรับเก็บข้อความแสดงข้อผิดพลาดจาก API
     }
@@ -910,20 +883,14 @@ export default {
     prepareBookingData(type) {
       const formData = type === 'phone' ? this.phoneForm : this.walkinForm;
 
-      // ✅ FIX: สร้างวันที่และเวลาด้วย timezone-aware approach
-      // User เลือกเวลา Bangkok time แต่ backend ต้องการ UTC
-      const bangkokDateTime = dayjs.tz(`${formData.date} ${formData.time}`, 'Asia/Bangkok')
-      const startTimeISO = bangkokDateTime.toISOString()
+      // สร้างวันที่และเวลาในรูปแบบที่ถูกต้อง ISO 8601
+      // ตัวอย่าง: '2025-05-17T13:00:00.000Z'
+      const startTimeISO = `${formData.date}T${formData.time}:00.000Z`;
 
       // คำนวณเวลาสิ้นสุด (เพิ่ม 1 ชั่วโมง)
-      const endTimeISO = bangkokDateTime.add(1, 'hour').toISOString()
-
-      console.log('🕐 Booking time conversion:', {
-        userInput: `${formData.date} ${formData.time}`,
-        bangkokTime: bangkokDateTime.format(),
-        utcTime: startTimeISO,
-        endTime: endTimeISO
-      })
+      const [startHour, startMinute] = formData.time.split(':').map(Number);
+      const endHour = (startHour + 1) % 24;
+      const endTimeISO = `${formData.date}T${endHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}:00.000Z`;
 
       // แปลง vehicle_id ให้เป็น integer
       const vehicleId = this.parseVehicleId(formData.carModel);
@@ -972,25 +939,7 @@ export default {
         duration: 60, // หน่วยเป็นนาที
         responsible_staff: responsibleStaffId, // ✅ FIX: ใช้ staff ID ที่เป็น number
         brand_id: brandId // ✅ เพิ่ม brand_id ตาม API spec
-        // ⚠️ notes: ไม่ส่งเพราะ backend ยังไม่ support (จะเก็บไว้ใน localStorage แทน)
       };
-
-      // ✅ เก็บ notes ไว้ใน localStorage สำหรับใช้ภายหลัง (เมื่อ backend support)
-      if (formData.notes && formData.notes.trim()) {
-        try {
-          const notesData = JSON.parse(localStorage.getItem('testDriveNotes') || '{}');
-          // จะเก็บ notes พร้อม timestamp สำหรับใช้ภายหลัง
-          notesData[`pending_${Date.now()}`] = {
-            customerName: formData.customerName,
-            notes: formData.notes.trim(),
-            createdAt: new Date().toISOString()
-          };
-          localStorage.setItem('testDriveNotes', JSON.stringify(notesData));
-          console.log('📝 Notes saved to localStorage (backend not supported yet):', formData.notes);
-        } catch (err) {
-          console.warn('Failed to save notes to localStorage:', err);
-        }
-      }
       
       // เพิ่มข้อมูลเกี่ยวกับบัตรประชาชน/ใบขับขี่ (สำหรับ walkin)
       if (type === 'walkin' && this.isDataScanned) {
@@ -1667,13 +1616,6 @@ export default {
 
 .input-2::placeholder {
   color: #999;
-}
-
-/* ✅ Textarea notes styling */
-.textarea-notes {
-  min-height: 80px;
-  resize: vertical;
-  line-height: 1.5;
 }
 
 .button-3 {
