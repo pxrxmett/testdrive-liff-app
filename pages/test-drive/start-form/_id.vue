@@ -46,20 +46,20 @@
         <h2 class="form-title">เริ่มทดลองขับ</h2>
   
         <!-- Customer Info Display -->
-        <div v-if="testDriveData.customer_name" class="customer-info-card">
+        <div v-if="getCustomerName() !== 'ไม่ระบุ'" class="customer-info-card">
           <h3>ข้อมูลลูกค้า</h3>
           <div class="customer-details">
             <div class="detail-row">
               <span class="label">ชื่อ:</span>
-              <span class="value">{{ testDriveData.customer_name }}</span>
+              <span class="value">{{ getCustomerName() }}</span>
             </div>
             <div class="detail-row">
               <span class="label">เบอร์โทร:</span>
-              <span class="value">{{ testDriveData.customer_phone || 'ไม่ระบุ' }}</span>
+              <span class="value">{{ testDriveData.customer_phone || testDriveData.customerPhone || 'ไม่ระบุ' }}</span>
             </div>
             <div class="detail-row">
               <span class="label">รุ่นรถ:</span>
-              <span class="value">{{ vehicleData.model || 'ไม่ระบุ' }}</span>
+              <span class="value">{{ getVehicleModel() }}</span>
             </div>
           </div>
         </div>
@@ -230,8 +230,8 @@
         <div class="modal-content" @click.stop>
           <h3>ยืนยันการเริ่มทดลองขับ</h3>
           <div class="confirmation-details">
-            <p><strong>ลูกค้า:</strong> {{ testDriveData.customer_name }}</p>
-            <p><strong>รุ่นรถ:</strong> {{ vehicleData.model }}</p>
+            <p><strong>ลูกค้า:</strong> {{ getCustomerName() }}</p>
+            <p><strong>รุ่นรถ:</strong> {{ getVehicleModel() }}</p>
             <p><strong>เวลาเริ่ม:</strong> {{ formData.startTime }}</p>
             <p><strong>ระยะเวลา:</strong> {{ formData.duration }} นาที</p>
             <p><strong>เส้นทาง:</strong> {{ getRouteText() }}</p>
@@ -248,7 +248,7 @@
   </template>
   
   <script>
-  import { updateTestDrive, updateVehicleStatus } from '~/utils/brandApi'
+  import { updateTestDrive, updateVehicleStatus, getTestDriveById, getVehicleById, getStaffById } from '~/utils/brandApi'
 
   export default {
     name: 'TestDriveStartForm',
@@ -296,33 +296,41 @@
         try {
           this.isLoading = true
           const testDriveId = this.$route.params.id
-  
-          // โหลดข้อมูลการทดลองขับ
-          const testDriveResponse = await this.$axios.get(`/test-drives/${testDriveId}`)
-          this.testDriveData = testDriveResponse.data
-  
-          // ตรวจสอบสถานะ
-          if (this.testDriveData.status !== 'pending') {
-            this.$toast.error('การทดลองขับนี้ไม่สามารถเริ่มได้')
+
+          // ✅ FIX: ใช้ brand-scoped API helper แทนการเรียก API โดยตรง
+          this.testDriveData = await getTestDriveById(this.$axios, testDriveId)
+
+          console.log('✅ Loaded test drive data:', this.testDriveData)
+
+          // ✅ FIX: ตรวจสอบสถานะเป็น uppercase (backend ใช้ 'PENDING' ไม่ใช่ 'pending')
+          const status = (this.testDriveData.status || '').toUpperCase()
+          if (status !== 'PENDING') {
+            this.$toast.error('การทดลองขับนี้ไม่สามารถเริ่มได้ (สถานะไม่ใช่ PENDING)')
             this.$router.push(`/test-drive/${testDriveId}`)
             return
           }
-  
-          // โหลดข้อมูลรถ
+
+          // ✅ FIX: โหลดข้อมูลรถด้วย brand-scoped helper
           if (this.testDriveData.vehicle_id) {
-            const vehicleResponse = await this.$axios.get(`/stock/${this.testDriveData.vehicle_id}`)
-            this.vehicleData = vehicleResponse.data
+            this.vehicleData = await getVehicleById(this.$axios, this.testDriveData.vehicle_id)
+            console.log('✅ Loaded vehicle data:', this.vehicleData)
           }
-  
-          // โหลดข้อมูลพนักงาน
-          if (this.testDriveData.responsible_staff) {
-            const staffResponse = await this.$axios.get(`/staffs/${this.testDriveData.responsible_staff}`)
-            this.staffInfo = staffResponse.data
+
+          // ✅ FIX: โหลดข้อมูลพนักงานด้วย brand-scoped helper
+          // Check both responsible_staff (ID) and responsibleStaff (object)
+          const staffId = this.testDriveData.responsible_staff_id ||
+                          this.testDriveData.responsible_staff ||
+                          this.testDriveData.responsibleStaff?.id
+
+          if (staffId) {
+            this.staffInfo = await getStaffById(this.$axios, staffId)
+            console.log('✅ Loaded staff data:', this.staffInfo)
           }
-  
+
         } catch (error) {
-          console.error('Error loading data:', error)
-          this.$toast.error('ไม่สามารถโหลดข้อมูลได้')
+          console.error('❌ Error loading data:', error)
+          console.error('Error details:', error.response?.data || error.message)
+          this.$toast.error('ไม่สามารถโหลดข้อมูลได้: ' + (error.response?.data?.message || error.message))
           // ✅ FIX: Redirect กลับหน้าหลักแทน (ไม่ใช่ /queue ที่ไม่มี index)
           this.$router.push('/')
         } finally {
@@ -454,6 +462,21 @@
           return `กำหนดเอง (${this.formData.customDistance} กม.)`
         }
         return this.routeOptions[this.formData.testRoute]?.text || ''
+      },
+      getCustomerName() {
+        // ✅ FIX: Support multiple possible field names from API
+        return this.testDriveData.customer_name ||
+               this.testDriveData.customerName ||
+               this.testDriveData.customer?.name ||
+               'ไม่ระบุ'
+      },
+      getVehicleModel() {
+        // ✅ FIX: Support multiple possible field names from API
+        return this.vehicleData.model ||
+               this.vehicleData.vehicleModel ||
+               this.vehicleData.mdlCd ||
+               this.testDriveData.vehicle?.model ||
+               'ไม่ระบุ'
       },
       getSystemStatusText() {
         return this.testDriveData.status === 'pending' ? 'พร้อมใช้งาน' : 'ไม่พร้อมใช้งาน'
